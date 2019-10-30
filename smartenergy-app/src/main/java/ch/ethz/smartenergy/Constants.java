@@ -14,4 +14,6 @@ public class Constants {
 
     public static final double MaxSpeedStill = 5;
     public static final double MaxAccStill = 0.6;
+
+    public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
 }

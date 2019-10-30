@@ -84,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Double> train_mean;
     private List<Double> train_std;
 
-    private Map<String, Integer> mostPresent;
+    private Map<String, Integer> mostPresentWindow;
+    private Map<String, Integer> mostPresentPersistent;
 
     private TextView sensorData;
     private TextView probabilityStandingStil;
@@ -99,14 +100,12 @@ public class MainActivity extends AppCompatActivity {
     private TextView activity;
     private PieChart chart;
 
-    private int stillMin = 0;
-    private int activityMin = 0;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        this.mostPresent = new HashMap<String, Integer>();
+        this.mostPresentWindow = new HashMap<>();
+        this.mostPresentPersistent = new HashMap<>();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         sensorData = findViewById(R.id.text_sensor);
@@ -193,7 +192,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void writeActivity(String act) {
 
-
         try (FileWriter file = new FileWriter(this.getFilesDir().getAbsolutePath() + "/" + "storage.txt", true)) {
 
             file.write(Calendar.getInstance().getTime() + "," + act + "\n");
@@ -220,18 +218,22 @@ public class MainActivity extends AppCompatActivity {
 
                     System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
 
-                    isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
+                    boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
                             avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()), getLatitude(scan.getLocationScans()),
                             getLongitude(scan.getLocationScans()));
-                    predict(meanMagnitude, maxSpeed);
+                    float[] predictionsXGBoost = predict(meanMagnitude, maxSpeed);
 
-
+                    updateChart(isStill, predictionsXGBoost);
                     //writeDataJson(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()));
 
                     predict_NN(scan.getAccReadings());
+
+                    MainActivity.this.internalCycle++;
                 }
             }
+
         }
+
     };
 
 
@@ -339,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
         appendResult(predictions);
     }
 
-    private void predict(double meanMagnitude, double maxSpeed) {
+    private float[] predict(double meanMagnitude, double maxSpeed) {
         // build features vector
         double[] features = {meanMagnitude, maxSpeed};
         FVec features_vector = FVec.Transformer.fromArray(features, false);
@@ -347,17 +349,18 @@ public class MainActivity extends AppCompatActivity {
         //predict
         float[] predictions = predictor.predict(features_vector);
         showResult(predictions);
+
+        return predictions;
     }
 
     private double convertToKmPerHour(double metersPerSecond) {
         return ((metersPerSecond*3600)/1000);
     }
 
-    private void isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
+    private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
         // Calculate if standing still
 
         double speedInKm = convertToKmPerHour(avgSpeed);
-        boolean isStill = false;
         //sensorData.setText("AvgSpeed: " + avgSpeed + " MaxSpeed: " + maxSpeed + " AvgAccX: " + avgAccX + " AvgAccY: " + avgAccY + " AvgAccZ: " + avgAccX);
         sensorData.setText(String.format("AvgSpeed: %.2f - MaxSpeed: %.2f - AvgAccX: %.2f - AvgAccY: %.2f - AvgAccZ: %.2f - MeanAcc: %.6f - Latitude: %.6f - Longitude: %.6f",
                 convertToKmPerHour(avgSpeed), convertToKmPerHour(maxSpeed), avgAccX, avgAccY, avgAccZ, meanMagnitude, latitude, longitude));
@@ -366,30 +369,43 @@ public class MainActivity extends AppCompatActivity {
 
         if (speedInKm <= Constants.MaxSpeedStill &&  meanMagnitude <= Constants.MaxAccStill) {
             probabilityStandingStil.setText(String.format("Status: Still"));
-            this.mostPresent.put("Still", this.mostPresent.getOrDefault("Still", 0) +1);
-        } else if (speedInKm >= 10) {
-            probabilityStandingStil.setText(String.format("Status: Moving"));
-            this.mostPresent.put("Moving", this.mostPresent.getOrDefault("Moving", 0) + 1);
+            return true;
+        } /*else if (speedInKm >= 10) {
+            probabilityStandingStil.setText(String.format("Status: Activity"));
+            this.mostPresentWindow.put("Activity", this.mostPresentWindow.getOrDefault("Moving", 0) + 1);
         } else if (meanMagnitude > Constants.MaxAccStill){
-            probabilityStandingStil.setText(String.format("Status: Moving"));
-            this.mostPresent.put("Moving", this.mostPresent.getOrDefault("Moving", 0) +1);
+            probabilityStandingStil.setText(String.format("Status: Activity"));
+            this.mostPresentWindow.put("Activity", this.mostPresentWindow.getOrDefault("Moving", 0) +1);
+        }*/
+        return false;
+    }
+
+    private void updateChart(boolean isStill, float[] predictions) {
+
+        List<Float> listPredictions = new ArrayList<Float>();
+        for (float prediction : predictions) {
+            listPredictions.add(prediction);
         }
 
-        this.internalCycle++;
+        int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
 
-        if (this.internalCycle == 10) {
-            String key = Collections.max(this.mostPresent.entrySet(), Map.Entry.comparingByValue()).getKey();
+        if (isStill) {
+            this.mostPresentWindow.put(Constants.ListModes[8], this.mostPresentWindow.getOrDefault(Constants.ListModes[8], 0) + 1);
+        } else {
+            this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
+        }
+
+        if (this.internalCycle == 12) {
+            String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
             writeActivity(key);
-            if (key == "Still") {
-                stillMin++;
-            } else {
-                activityMin++;
-            }
+
+            this.mostPresentPersistent.put(key, this.mostPresentPersistent.getOrDefault(key, 0) +1);
+
+
 
             List<PieEntry> pieChartEntries = new ArrayList<>();
 
-            pieChartEntries.add(new PieEntry(activityMin, "Activity"));
-            pieChartEntries.add(new PieEntry(stillMin, "Still"));
+            this.mostPresentPersistent.forEach((k, v) -> pieChartEntries.add(new PieEntry(v, k)));
 
 
             // Outside values
@@ -418,15 +434,16 @@ public class MainActivity extends AppCompatActivity {
 
             this.chart.getDescription().setEnabled(false);
             //if (!(activityMin > 1 || stillMin > 1)) {
-                this.chart.animateXY(1200, 1200);
+            this.chart.animateXY(1200, 1200);
             //}
 
             this.chart.invalidate();
 
-            activity.setText(String.format("Minutes Still: %d - Minutes active %d", stillMin, activityMin));
+            activity.setText(String.format("Minutes Still: %d - Minutes active %d", this.mostPresentPersistent.get("Still"), this.mostPresentPersistent.get("Active")));
             this.internalCycle = 0;
-            this.mostPresent = new HashMap<String, Integer>();
+            this.mostPresentWindow = new HashMap<>();
         }
+
     }
 
     private void appendResult(float[] predictions) {
@@ -440,6 +457,7 @@ public class MainActivity extends AppCompatActivity {
         probabilityBicycle.append(String.format("%s %.2f %s", " vs", predictions[5] * 100," %"));
         probabilityEbike.append(String.format("%s %.2f %s", " vs", predictions[6] * 100," %"));
         probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100," %"));
+
     }
 
 
