@@ -215,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             json = new JSONObject(read(this, "data.json"));
-        }catch (JSONException err){
+        } catch (JSONException err){
             Log.d("Error", err.toString());
         }
 
@@ -528,14 +528,36 @@ public class MainActivity extends AppCompatActivity {
 
             updateJSON(key);
 
-            this.mostPresentPersistent.put(key, this.mostPresentPersistent.getOrDefault(key, 0) +1);
+
+            this.mostPresentPersistent.put(key, this.mostPresentPersistent.getOrDefault(key, 0) + 1);
 
 
+            JSONObject json = new JSONObject();
 
+            try {
+                json = new JSONObject(read(this, "data.json"));
+            } catch (JSONException err) {
+                Log.d("Error", err.toString());
+            }
+
+            SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
+            JSONObject todayData = new JSONObject();
+            try {
+                todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             List<PieEntry> pieChartEntries = new ArrayList<>();
 
-            this.mostPresentPersistent.forEach((k, v) -> pieChartEntries.add(new PieEntry(v, k)));
-
+            for (String activity : Constants.ListModes) {
+                try {
+                    if (todayData.getInt(activity) != 0) {
+                        pieChartEntries.add(new PieEntry(todayData.getInt(activity), activity));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
 
             // Outside values
             Legend l = this.chart.getLegend();
