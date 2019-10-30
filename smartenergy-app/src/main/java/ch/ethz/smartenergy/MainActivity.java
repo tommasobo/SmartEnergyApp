@@ -38,8 +38,11 @@ import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 
+import org.json.*;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+
 import org.tensorflow.lite.Interpreter;
 
 import java.io.BufferedReader;
@@ -53,10 +56,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -188,6 +194,79 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+    }
+
+    private void updateJSON(String key) {
+
+        boolean isFilePresent = isFilePresent(this, "data.json");
+        if(isFilePresent) {
+            String jsonString = read(this, "data.json");
+            //do the json parsing here and do the rest of functionality of app
+        } else {
+            boolean isFileCreated = create(this, "data.json", "{}");
+            if(isFileCreated) {
+                //proceed with storing the first
+            } else {
+                //show error or try again.
+            }
+        }
+
+        JSONObject json = new JSONObject();
+
+        try {
+            json = new JSONObject(read(this, "data.json"));
+        }catch (JSONException err){
+            Log.d("Error", err.toString());
+        }
+
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat dateOnly = new SimpleDateFormat("dd-MM-yyyy");
+
+        boolean exists = true;
+
+        JSONObject activity = new JSONObject();
+        try {
+        activity = json.getJSONObject(dateOnly.format(cal.getTime()));
+        }catch (JSONException err){
+            Log.d("Error", err.toString());
+            exists = false;
+        }
+
+        int c = 0;
+
+        if(exists){
+            try {
+                c = activity.getInt("moving");
+            }catch (JSONException err){
+                Log.d("Error", err.toString());
+            }
+
+        }
+
+        if (key == "Moving") {
+            c = c + 1;
+        }
+
+        try {
+            activity.put("date", Calendar.getInstance().getTime());
+            activity.put("moving", c);
+            activity.put("foot", 0);
+            activity.put("car", 0);
+            activity.put("bicycle", 0);
+            activity.put("tram", 0);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            json.put(dateOnly.format(cal.getTime()), activity);
+        }catch (JSONException err){
+            Log.d("Error", err.toString());
+            exists = true;
+        }
+
+        create(this,"data.json", json.toString());
 
     }
 
@@ -379,6 +458,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (this.internalCycle == 10) {
             String key = Collections.max(this.mostPresent.entrySet(), Map.Entry.comparingByValue()).getKey();
+
+            updateJSON(key);
+
             writeActivity(key);
             if (key == "Still") {
                 stillMin++;
@@ -697,7 +779,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean create(Context context, String fileName, String jsonString){
-        String FILENAME = "storage.txt";
         try {
             FileOutputStream fos = context.openFileOutput(fileName,Context.MODE_PRIVATE);
             if (jsonString != null) {
