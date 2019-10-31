@@ -133,28 +133,38 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/text_predicted_ebike" />
 
-    <TextView
-        android:id="@+id/text_activity"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/activity"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_motorcycle" />
-
     <Button
         android:id="@+id/button_start"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="312dp"
+        android:layout_height="35dp"
         android:layout_marginStart="36dp"
         android:layout_marginEnd="36dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginBottom="64dp"
         android:background="#009688"
         android:onClick="startScanning"
         android:text="@string/start_scanning"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.481"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/colorMenu"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_navigation_view"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/colorMenu"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_navigation_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

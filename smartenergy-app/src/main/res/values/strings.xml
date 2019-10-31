@@ -18,5 +18,7 @@
     <string name="bicycle">Bicycle: %1$.2f \%%</string>
     <string name="ebike">eBike: %1$.2f \%%</string>
     <string name="motorcycle">Motorcycle: %1$.2f \%%</string>
-    <string name="activity">Minutes Still: 0 -  Minutes Walk: 0</string>
+    <string name="settings">Settings</string>
+    <string name="stats">Data</string>
+    <string name="home">Home</string>
 </resources>
