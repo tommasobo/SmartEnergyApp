@@ -79,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
     private Map<String, Integer> mostPresentWindow;
     private Map<String, Integer> mostPresentPersistent;
 
-
     private float[] predictionsNN;
     private float[] predictions;
 
@@ -94,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
         this.mostPresentWindow = new HashMap<>();
         this.mostPresentPersistent = new HashMap<>();
         for (String mode: Constants.ListModes) {
@@ -106,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_view);
         bottomNav.setOnNavigationItemSelectedListener(navListener);
-
 
         try {
             // load pretrained predictor
@@ -128,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                     new HomeFragment(), "Home").commit();
         }
+
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
@@ -153,8 +151,6 @@ public class MainActivity extends AppCompatActivity {
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         selectedFragment, selected).commit();
 
-                List<Fragment> allFragments = getSupportFragmentManager().getFragments();
-                allFragments.forEach(e -> System.out.println("TAG: " + e.getTag()));
 
                 return true;
             };
@@ -276,11 +272,9 @@ public class MainActivity extends AppCompatActivity {
                             getLongitude(scan.getLocationScans()));
                     float[] predictionsXGBoost = predict(meanMagnitude, maxSpeed);
 
-                    updateData(isStill, predictionsXGBoost);
-
-                    //updateChart(isStill, predictionsXGBoost);
-
                     predict_NN(scan.getAccReadings());
+
+                    updateData(isStill, predictionsXGBoost);
 
                     MainActivity.this.internalCycle++;
                 }
@@ -304,35 +298,14 @@ public class MainActivity extends AppCompatActivity {
             this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
         }
 
-        if (this.internalCycle == 2) {
+        if (this.internalCycle == 60/SensorScanPeriod.DATA_COLLECTION_WINDOW_SIZE) {
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
             writeActivity(key);
 
             updateJSON(key);
 
-            JSONObject json = new JSONObject();
-
-            try {
-                json = new JSONObject(read(this, "data.json"));
-            } catch (JSONException err) {
-                Log.d("Error", err.toString());
-            }
-
-            SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
-            JSONObject todayData = new JSONObject();
-            try {
-                todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-
-            List<Fragment> allFragments = getSupportFragmentManager().getFragments();
-            allFragments.forEach(e -> System.out.println("TAG: " + e.getTag()));
-
-            HomeFragment frag = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
-
-            frag.updateChart(todayData);
+            // Update Home Fragment
+            ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home")).updateChart();
 
             this.internalCycle = 0;
             this.mostPresentWindow = new HashMap<>();
@@ -375,7 +348,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
 
     private void predict_NN(List<SensorReading> acc_readings) {
         List<Double> magnitudes = new ArrayList<>();
@@ -443,7 +415,6 @@ public class MainActivity extends AppCompatActivity {
 
         this.predictionsNN = predictions;
 
-        //appendResult(predictions);
     }
 
     private float[] predict(double meanMagnitude, double maxSpeed) {
@@ -453,7 +424,6 @@ public class MainActivity extends AppCompatActivity {
 
         //predict
         float[] predictions = predictor.predict(features_vector);
-        //showResult(predictions);
 
         this.predictions = predictions;
         return predictions;
@@ -472,90 +442,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
-    /*private void updateChart(boolean isStill, float[] predictions) {
-
-        List<Float> listPredictions = new ArrayList<Float>();
-        for (float prediction : predictions) {
-            listPredictions.add(prediction);
-        }
-
-        int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
-
-        if (isStill) {
-            this.mostPresentWindow.put(Constants.ListModes[8], this.mostPresentWindow.getOrDefault(Constants.ListModes[8], 0) + 1);
-        } else {
-            this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
-        }
-
-        if (this.internalCycle == 2) {
-            String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
-            writeActivity(key);
-
-            updateJSON(key);
-
-            JSONObject json = new JSONObject();
-
-            try {
-                json = new JSONObject(read(this, "data.json"));
-            } catch (JSONException err) {
-                Log.d("Error", err.toString());
-            }
-
-            SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
-            JSONObject todayData = new JSONObject();
-            try {
-                todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            List<PieEntry> pieChartEntries = new ArrayList<>();
-
-            for (String activity : Constants.ListModes) {
-                try {
-                    if (todayData.getInt(activity) != 0) {
-                        pieChartEntries.add(new PieEntry(todayData.getInt(activity), activity));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            // Outside values
-            Legend l = this.chart.getLegend();
-            l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
-            l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
-            l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
-            l.setDirection(Legend.LegendDirection.LEFT_TO_RIGHT);
-            l.setWordWrapEnabled(true);
-            l.setDrawInside(false);
-
-            PieDataSet set = new PieDataSet(pieChartEntries,"");
-
-            set.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-            set.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-            set.setValueLinePart1OffsetPercentage(100f); /** When valuePosition is OutsideSlice, indicates offset as percentage out of the slice size */
-            //set.setValueLinePart1Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
-            //set.setValueLinePart2Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
-
-            //this.chart.setExtraOffsets(0.f, 5.f, 0.f, 5.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
-            /*set.setColors(ColorTemplate.COLORFUL_COLORS);
-            PieData data = new PieData(set);
-            this.chart.setData(data);
-            data.setValueTextSize(10f);
-
-
-            this.chart.getDescription().setEnabled(false);
-            this.chart.animateXY(1200, 1200);
-
-            this.chart.invalidate();
-
-            this.internalCycle = 0;
-            this.mostPresentWindow = new HashMap<>();
-        }
-
-    }*/
-
 
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
         double maxSpeed = 0;
@@ -638,7 +524,6 @@ public class MainActivity extends AppCompatActivity {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
 
     }
-
 
     /**
      * Register broadcast receiver

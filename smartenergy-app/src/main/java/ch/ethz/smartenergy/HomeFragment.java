@@ -1,8 +1,7 @@
 package ch.ethz.smartenergy;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,18 +21,16 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import ch.ethz.smartenergy.model.ScanResult;
 
 
 public class HomeFragment extends Fragment {
@@ -91,24 +88,73 @@ public class HomeFragment extends Fragment {
         probabilityEbike.setText(getString(R.string.ebike, 0.00));
         probabilityMotorcycle.setText(getString(R.string.motorcycle, 0.00));
         chart = v.findViewById(R.id.chart_graph);
+        this.updateChart();
     }
 
+    private String read(Context context, String fileName) {
+        try {
+            FileInputStream fis = context.openFileInput(fileName);
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader bufferedReader = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
+        } catch (FileNotFoundException fileNotFound) {
+            return null;
+        } catch (IOException ioException) {
+            return null;
+        }
+    }
 
-    public void updateChart(JSONObject todayData) {
+    void updateChart() {
 
-        appendResult();
-        showResult();
+
+        // Temporary
+        if (this.mainActivity.getPredictions() != null) {
+            showResult();
+        }
+        if (this.mainActivity.getPredictionsNN() != null) {
+            appendResult();
+        }
+
+        JSONObject json = new JSONObject();
+
+        try {
+            json = new JSONObject(read(getActivity(), "data.json"));
+        } catch (JSONException err) {
+            Log.d("Error", err.toString());
+        }
+
+        SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
+        JSONObject todayData = new JSONObject();
+        try {
+            todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         List<PieEntry> pieChartEntries = new ArrayList<>();
+        final int[] material_colors = {
+                rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
+                rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
+                rgb("#D81B60")
+        };
+        ArrayList<Integer> colors = new ArrayList<>();
 
+        int i = 0;
         for (String activity : Constants.ListModes) {
             try {
                 if (todayData.getInt(activity) != 0) {
                     pieChartEntries.add(new PieEntry(todayData.getInt(activity), activity));
+                    colors.add(material_colors[i]);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+            i++;
         }
 
         // Outside values
@@ -129,30 +175,30 @@ public class HomeFragment extends Fragment {
         set.setValueLinePart2Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
 
         this.chart.setExtraOffsets(0.f, 5.f, 0.f, 5.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
-        set.setColors(ColorTemplate.COLORFUL_COLORS);
+
+
+
+
+        set.setColors(colors);
+
         PieData data = new PieData(set);
         this.chart.setData(data);
         data.setValueTextSize(10f);
 
 
         this.chart.getDescription().setEnabled(false);
-        this.chart.animateXY(1200, 1200);
+        this.chart.animateXY(1000, 1000);
 
         this.chart.invalidate();
 
     }
 
-    private void writeActivity(String act) {
-
-        try (FileWriter file = new FileWriter(getActivity().getFilesDir().getAbsolutePath() + "/" + "storage.txt", true)) {
-
-            file.write(Calendar.getInstance().getTime() + "," + act + "\n");
-            file.flush();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+    public static int rgb(String hex) {
+        int color = (int) Long.parseLong(hex.replace("#", ""), 16);
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = (color >> 0) & 0xFF;
+        return Color.rgb(r, g, b);
     }
 
     private void appendResult() {
@@ -170,7 +216,6 @@ public class HomeFragment extends Fragment {
         probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100, " %"));
 
     }
-
 
     private void showResult() {
 
