@@ -10,14 +10,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.res.AssetFileDescriptor;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
-
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,13 +21,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -41,11 +30,8 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import org.json.*;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-
 import org.tensorflow.lite.Interpreter;
 
 import java.io.BufferedReader;
@@ -59,13 +45,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,17 +79,17 @@ public class MainActivity extends AppCompatActivity {
     private Map<String, Integer> mostPresentWindow;
     private Map<String, Integer> mostPresentPersistent;
 
-    private TextView sensorData;
-    private TextView probabilityStandingStil;
-    private TextView probabilityOnFoot;
-    private TextView probabilityTrain;
-    private TextView probabilityTramway;
-    private TextView probabilityBus;
-    private TextView probabilityCar;
-    private TextView probabilityBicycle;
-    private TextView probabilityEbike;
-    private TextView probabilityMotorcycle;
-    private PieChart chart;
+
+    private float[] predictionsNN;
+    private float[] predictions;
+
+    public float[] getPredictionsNN() {
+        return predictionsNN;
+    }
+
+    public float[] getPredictions() {
+        return predictions;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,32 +107,7 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_view);
         bottomNav.setOnNavigationItemSelectedListener(navListener);
 
-        sensorData = findViewById(R.id.text_sensor);
-        probabilityStandingStil = findViewById(R.id.text_predicted_still);
-        probabilityOnFoot = findViewById(R.id.text_predicted_foot);
-        probabilityTrain = findViewById(R.id.text_predicted_train);
-        probabilityTramway = findViewById(R.id.text_predicted_tramway);
-        probabilityBus = findViewById(R.id.text_predicted_bus);
-        probabilityCar = findViewById(R.id.text_predicted_car);
-        probabilityBicycle = findViewById(R.id.text_predicted_bicycle);
-        probabilityEbike = findViewById(R.id.text_predicted_ebike);
-        probabilityMotorcycle = findViewById(R.id.text_predicted_motorcycle);
 
-        sensorData.setText(getString(R.string.sensors, 0.00));
-        probabilityStandingStil.setText(getString(R.string.still, 0.00));
-        probabilityOnFoot.setText(getString(R.string.on_foot, 0.00));
-        probabilityTrain.setText(getString(R.string.train, 0.00));
-        probabilityBus.setText(getString(R.string.bus, 0.00));
-        probabilityCar.setText(getString(R.string.car, 0.00));
-        probabilityTramway.setText(getString(R.string.tramway, 0.00));
-        probabilityBicycle.setText(getString(R.string.bicycle, 0.00));
-        probabilityEbike.setText(getString(R.string.ebike, 0.00));
-        probabilityMotorcycle.setText(getString(R.string.motorcycle,0.00));
-
-        chart = findViewById(R.id.chart_graph);
-
-
-        Log.d("CREATED MODEL", "TEST");
         try {
             // load pretrained predictor
             InputStream model = getResources().openRawResource(R.raw.xgboost);
@@ -164,27 +122,39 @@ public class MainActivity extends AppCompatActivity {
         }
 
         registerReceiver();
+
+        //I added this if statement to keep the selected fragment when rotating the device
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    new HomeFragment(), "Home").commit();
+        }
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
             item -> {
                 Fragment selectedFragment = null;
+                String selected = null;
 
                 switch (item.getItemId()) {
                     case R.id.nav_home:
-                        AppCompatActivity selectedActivity = new MainActivity();
+                        selectedFragment = new HomeFragment();
+                        selected = "Home";
                         break;
                     case R.id.nav_stats:
                         selectedFragment = new StatsFragmenet();
-                        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                                selectedFragment).commit();
+                        selected = "Stats";
                         break;
                     case R.id.nav_settings:
                         selectedFragment = new SettingsFragment();
-                        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                                selectedFragment).commit();
+                        selected = "Settings";
                         break;
                 }
+
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        selectedFragment, selected).commit();
+
+                List<Fragment> allFragments = getSupportFragmentManager().getFragments();
+                allFragments.forEach(e -> System.out.println("TAG: " + e.getTag()));
 
                 return true;
             };
@@ -306,7 +276,9 @@ public class MainActivity extends AppCompatActivity {
                             getLongitude(scan.getLocationScans()));
                     float[] predictionsXGBoost = predict(meanMagnitude, maxSpeed);
 
-                    updateChart(isStill, predictionsXGBoost);
+                    updateData(isStill, predictionsXGBoost);
+
+                    //updateChart(isStill, predictionsXGBoost);
 
                     predict_NN(scan.getAccReadings());
 
@@ -317,6 +289,56 @@ public class MainActivity extends AppCompatActivity {
         }
 
     };
+
+    private void updateData(boolean isStill, float[] predictionsXGBoost) {
+        List<Float> listPredictions = new ArrayList<Float>();
+        for (float prediction : predictions) {
+            listPredictions.add(prediction);
+        }
+
+        int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
+
+        if (isStill) {
+            this.mostPresentWindow.put(Constants.ListModes[8], this.mostPresentWindow.getOrDefault(Constants.ListModes[8], 0) + 1);
+        } else {
+            this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
+        }
+
+        if (this.internalCycle == 2) {
+            String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
+            writeActivity(key);
+
+            updateJSON(key);
+
+            JSONObject json = new JSONObject();
+
+            try {
+                json = new JSONObject(read(this, "data.json"));
+            } catch (JSONException err) {
+                Log.d("Error", err.toString());
+            }
+
+            SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
+            JSONObject todayData = new JSONObject();
+            try {
+                todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+
+            List<Fragment> allFragments = getSupportFragmentManager().getFragments();
+            allFragments.forEach(e -> System.out.println("TAG: " + e.getTag()));
+
+            HomeFragment frag = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
+
+            frag.updateChart(todayData);
+
+            this.internalCycle = 0;
+            this.mostPresentWindow = new HashMap<>();
+        }
+
+    }
 
     private void load_assets() {
         try {
@@ -419,7 +441,9 @@ public class MainActivity extends AppCompatActivity {
             predictions[i] = outputs[0][i];
         }
 
-        appendResult(predictions);
+        this.predictionsNN = predictions;
+
+        //appendResult(predictions);
     }
 
     private float[] predict(double meanMagnitude, double maxSpeed) {
@@ -429,8 +453,9 @@ public class MainActivity extends AppCompatActivity {
 
         //predict
         float[] predictions = predictor.predict(features_vector);
-        showResult(predictions);
+        //showResult(predictions);
 
+        this.predictions = predictions;
         return predictions;
     }
 
@@ -440,21 +465,15 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
         // Calculate if standing still
-
         double speedInKm = convertToKmPerHour(avgSpeed);
-        sensorData.setText(String.format("AvgSpeed: %.2f - MaxSpeed: %.2f - AvgAccX: %.2f - AvgAccY: %.2f - AvgAccZ: %.2f - MeanAcc: %.6f - Latitude: %.6f - Longitude: %.6f",
-                convertToKmPerHour(avgSpeed), convertToKmPerHour(maxSpeed), avgAccX, avgAccY, avgAccZ, meanMagnitude, latitude, longitude));
-        probabilityStandingStil.setText(getString(R.string.still,  speedInKm));
-        probabilityStandingStil.append(String.format("%s %.1f", " Acc:" , meanMagnitude));
 
         if (speedInKm <= Constants.MaxSpeedStill &&  meanMagnitude <= Constants.MaxAccStill) {
-            probabilityStandingStil.setText(String.format("Status: Still"));
             return true;
         }
         return false;
     }
 
-    private void updateChart(boolean isStill, float[] predictions) {
+    /*private void updateChart(boolean isStill, float[] predictions) {
 
         List<Float> listPredictions = new ArrayList<Float>();
         for (float prediction : predictions) {
@@ -516,11 +535,11 @@ public class MainActivity extends AppCompatActivity {
             set.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
             set.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
             set.setValueLinePart1OffsetPercentage(100f); /** When valuePosition is OutsideSlice, indicates offset as percentage out of the slice size */
-            set.setValueLinePart1Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
-            set.setValueLinePart2Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
+            //set.setValueLinePart1Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
+            //set.setValueLinePart2Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
 
-            this.chart.setExtraOffsets(0.f, 5.f, 0.f, 5.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
-            set.setColors(ColorTemplate.COLORFUL_COLORS);
+            //this.chart.setExtraOffsets(0.f, 5.f, 0.f, 5.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
+            /*set.setColors(ColorTemplate.COLORFUL_COLORS);
             PieData data = new PieData(set);
             this.chart.setData(data);
             data.setValueTextSize(10f);
@@ -535,34 +554,8 @@ public class MainActivity extends AppCompatActivity {
             this.mostPresentWindow = new HashMap<>();
         }
 
-    }
+    }*/
 
-    private void appendResult(float[] predictions) {
-        Log.d("PROBABILITIES: ", Arrays.toString(predictions));
-
-        probabilityOnFoot.append(String.format("%s %.2f %s", " vs" , predictions[0] * 100, " %"));
-        probabilityTrain.append(String.format("%s %.2f %s", " vs", predictions[1] * 100, " %"));
-        probabilityBus.append(String.format("%s %.2f %s", " vs", predictions[2] * 100," %"));
-        probabilityCar.append(String.format("%s %.2f %s", " vs", predictions[3] * 100," %"));
-        probabilityTramway.append(String.format("%s %.2f %s", " vs", predictions[4] * 100," %"));
-        probabilityBicycle.append(String.format("%s %.2f %s", " vs", predictions[5] * 100," %"));
-        probabilityEbike.append(String.format("%s %.2f %s", " vs", predictions[6] * 100," %"));
-        probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100," %"));
-
-    }
-
-
-    private void showResult(float[] predictions) {
-
-        probabilityOnFoot.setText(getString(R.string.on_foot, predictions[0] * 100));
-        probabilityTrain.setText(getString(R.string.train, predictions[1] * 100));
-        probabilityBus.setText(getString(R.string.bus, predictions[2] * 100));
-        probabilityCar.setText(getString(R.string.car, predictions[3] * 100));
-        probabilityTramway.setText(getString(R.string.tramway, predictions[4] * 100));
-        probabilityBicycle.setText(getString(R.string.bicycle, predictions[5] * 100));
-        probabilityEbike.setText(getString(R.string.ebike, predictions[6] * 100));
-        probabilityMotorcycle.setText(getString(R.string.motorcycle, predictions[7] * 100));
-    }
 
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
         double maxSpeed = 0;
@@ -582,7 +575,7 @@ public class MainActivity extends AppCompatActivity {
     private double getLatitude(ArrayList<LocationScan> locationScans) {
         if (locationScans != null && !locationScans.isEmpty()) {
             return locationScans.get(locationScans.size() - 1).getLatitude();
-    } else {
+        } else {
             return 0.0;
         }
     }
