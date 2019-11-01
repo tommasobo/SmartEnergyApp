@@ -22,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -66,8 +67,6 @@ public class HomeFragment extends Fragment {
         View v = getView();
 
 
-        sensorData = v.findViewById(R.id.text_sensor);
-        probabilityStandingStil = v.findViewById(R.id.text_predicted_still);
         probabilityOnFoot = v.findViewById(R.id.text_predicted_foot);
         probabilityTrain = v.findViewById(R.id.text_predicted_train);
         probabilityTramway = v.findViewById(R.id.text_predicted_tramway);
@@ -77,8 +76,6 @@ public class HomeFragment extends Fragment {
         probabilityEbike = v.findViewById(R.id.text_predicted_ebike);
         probabilityMotorcycle = v.findViewById(R.id.text_predicted_motorcycle);
 
-        sensorData.setText(getString(R.string.sensors, 0.00));
-        probabilityStandingStil.setText(getString(R.string.still, 0.00));
         probabilityOnFoot.setText(getString(R.string.on_foot, 0.00));
         probabilityTrain.setText(getString(R.string.train, 0.00));
         probabilityBus.setText(getString(R.string.bus, 0.00));
@@ -88,6 +85,7 @@ public class HomeFragment extends Fragment {
         probabilityEbike.setText(getString(R.string.ebike, 0.00));
         probabilityMotorcycle.setText(getString(R.string.motorcycle, 0.00));
         chart = v.findViewById(R.id.chart_graph);
+        this.chart.setNoDataText("No Data Available for Today");
         this.updateChart();
     }
 
@@ -111,13 +109,16 @@ public class HomeFragment extends Fragment {
 
     void updateChart() {
 
-
         // Temporary
         if (this.mainActivity.getPredictions() != null) {
             showResult();
         }
         if (this.mainActivity.getPredictionsNN() != null) {
             appendResult();
+        }
+
+        if(!isFilePresent(getActivity(), "data.json")) {
+            return;
         }
 
         JSONObject json = new JSONObject();
@@ -176,9 +177,6 @@ public class HomeFragment extends Fragment {
 
         this.chart.setExtraOffsets(0.f, 5.f, 0.f, 5.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
 
-
-
-
         set.setColors(colors);
 
         PieData data = new PieData(set);
@@ -193,7 +191,13 @@ public class HomeFragment extends Fragment {
 
     }
 
-    public static int rgb(String hex) {
+    private boolean isFilePresent(Context context, String fileName) {
+        String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
+        File file = new File(path);
+        return file.exists();
+    }
+
+    private static int rgb(String hex) {
         int color = (int) Long.parseLong(hex.replace("#", ""), 16);
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
@@ -201,7 +205,7 @@ public class HomeFragment extends Fragment {
         return Color.rgb(r, g, b);
     }
 
-    private void appendResult() {
+    void appendResult() {
 
         float[] predictions = this.mainActivity.getPredictionsNN();
         Log.d("PROBABILITIES: ", Arrays.toString(predictions));
@@ -217,7 +221,7 @@ public class HomeFragment extends Fragment {
 
     }
 
-    private void showResult() {
+    void showResult() {
 
         float[] predictions = this.mainActivity.getPredictions();
         probabilityOnFoot.setText(getString(R.string.on_foot, predictions[0] * 100));
@@ -231,6 +235,13 @@ public class HomeFragment extends Fragment {
     }
 
 
+    void startScanning() {
+        if (this.chart != null && this.chart.getData() == null) {
+            this.chart.setNoDataText("Collecting Data, please wait...");
+            this.chart.setNoDataTextColor(rgb("#1da554"));
+        }
+
+    }
 }
 
 

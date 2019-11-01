@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -207,25 +206,32 @@ public class MainActivity extends AppCompatActivity {
             try {
                 for (String mode: Constants.ListModes) {
                     this.mostPresentPersistent.put(mode, activity.getInt(mode));
-
+                    activity.put(mode, this.mostPresentPersistent.get(mode));
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
                     this.mostPresentPersistent.put(key, temp + 1);
+                    activity.put(key, this.mostPresentPersistent.get(key));
                 }
             }catch (JSONException err){
                 Log.d("Error", err.toString());
             }
-        }
+        } else {
+            try {
+                activity.put("date", Calendar.getInstance().getTime());
+                for (String mode : Constants.ListModes) {
+                    this.mostPresentPersistent.put(mode, 0);
+                    activity.put(mode, this.mostPresentPersistent.get(mode));
+                }
+                Integer temp = this.mostPresentPersistent.get(key);
+                if (temp != null) {
+                    this.mostPresentPersistent.put(key, temp + 1);
+                    activity.put(key, this.mostPresentPersistent.get(key));
+                }
 
-        try {
-            activity.put("date", Calendar.getInstance().getTime());
-            for (String mode: Constants.ListModes) {
-                activity.put(mode, this.mostPresentPersistent.get(mode));
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
         }
 
         try {
@@ -236,19 +242,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         create(this,"data.json", json.toString());
-
-    }
-
-    private void writeActivity(String act) {
-
-        try (FileWriter file = new FileWriter(this.getFilesDir().getAbsolutePath() + "/" + "storage.txt", true)) {
-
-            file.write(Calendar.getInstance().getTime() + "," + act + "\n");
-            file.flush();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -276,6 +269,12 @@ public class MainActivity extends AppCompatActivity {
 
                     updateData(isStill, predictionsXGBoost);
 
+                    HomeFragment homeFragment = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
+                    if (homeFragment != null) {
+                        homeFragment.showResult();
+                        homeFragment.appendResult();
+                    }
+
                     MainActivity.this.internalCycle++;
                 }
             }
@@ -298,14 +297,17 @@ public class MainActivity extends AppCompatActivity {
             this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
         }
 
-        if (this.internalCycle == 60/SensorScanPeriod.DATA_COLLECTION_WINDOW_SIZE) {
+        if (this.internalCycle == 11) {
+
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
-            writeActivity(key);
 
             updateJSON(key);
 
             // Update Home Fragment
-            ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home")).updateChart();
+            HomeFragment homeFragment = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
+            if (homeFragment != null) {
+                homeFragment.updateChart();
+            }
 
             this.internalCycle = 0;
             this.mostPresentWindow = new HashMap<>();
@@ -643,6 +645,11 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      */
     public void startScanning(View view) {
+        // Update Home Fragment
+        HomeFragment homeFragment = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
+        if (homeFragment != null) {
+            homeFragment.startScanning();
+        }
         view.setEnabled(false);
         Intent serviceIntent = new Intent(this, DataCollectionService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -650,18 +657,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             this.startService(serviceIntent);
         }
-        boolean isFilePresent = isFilePresent(this, "storage.json");
-        if(isFilePresent) {
-            String jsonString = read(this, "storage.json");
-            //do the json parsing here and do the rest of functionality of app
-        } else {
-            boolean isFileCreated = create(this, "storage.json", "{}");
-            if(isFileCreated) {
-                //proceed with storing the first todo  or show ui
-            } else {
-                //show error or try again.
-            }
-        }
+
     }
 
 

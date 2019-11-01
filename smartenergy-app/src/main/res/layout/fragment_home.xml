@@ -7,61 +7,98 @@
     android:keepScreenOn="true"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/text_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/text_title"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:animateLayoutChanges="true"
+        android:background="#bdc4b6  "
+        app:layout_constraintBottom_toTopOf="@+id/todayBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.025" />
+        app:layout_constraintVertical_bias="0.0">
 
-    <TextView
-        android:id="@+id/text_sensor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/still"
-        android:textSize="14sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_title" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <TextView
-        android:id="@+id/text_predicted_still"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/still"
-        android:textSize="16sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_sensor" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/todayBar"
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:background="#f0f7e8"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topBar" >
 
+        <TextView
+            android:id="@+id/Today"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="178dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="175dp"
+            android:layout_marginBottom="11dp"
+            android:gravity="center"
+            android:text="Today"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/imageButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="135dp"
+            android:background="@android:color/transparent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/Today"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_keyboard_arrow_right_black_24dp" />
+
+        <ImageButton
+            android:id="@+id/imageButton2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="137dp"
+            android:background="@android:color/transparent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/Today"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_keyboard_arrow_left_black_24dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.github.mikephil.charting.charts.PieChart
         android:id="@+id/chart_graph"
+        android:layout_width="338dp"
         android:layout_height="0dp"
-        android:layout_width="0dp"
-        app:layout_constraintWidth_default="percent"
-        app:layout_constraintWidth_percent=".82"
-        app:layout_constraintHeight_default="percent"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent=".45"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_still" />
+        app:layout_constraintStart_toStartOf="@+id/linearLayout"
+        app:layout_constraintTop_toTopOf="@+id/linearLayout"
+        app:layout_constraintWidth_percent=".82" />
 
     <TextView
         android:id="@+id/text_predicted_foot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
         android:text="@string/on_foot"
         android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/chart_graph" />
+        app:layout_constraintBottom_toTopOf="@+id/text_predicted_train"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/bottomContainer"
+        app:layout_constraintTop_toTopOf="@+id/bottomContainer" />
 
     <TextView
         android:id="@+id/text_predicted_train"
@@ -138,14 +175,41 @@
         android:layout_width="312dp"
         android:layout_height="35dp"
         android:layout_marginStart="36dp"
+        android:layout_marginTop="12dp"
         android:layout_marginEnd="36dp"
-        android:layout_marginBottom="28dp"
-        android:background="#009688"
+        android:background="#bdc4b6  "
         android:onClick="startScanning"
         android:text="@string/start_scanning"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.481"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_predicted_motorcycle" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="409dp"
+        android:layout_height="358dp"
+        android:background="#e1e2e1"
+        android:orientation="horizontal"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/bottomContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/todayBar" />
+
+    <LinearLayout
+        android:id="@+id/bottomContainer"
+        android:layout_width="415dp"
+        android:layout_height="294dp"
+        android:background="#ffffff"
+        android:orientation="horizontal"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+        tools:visibility="invisible" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
