@@ -240,6 +240,7 @@ public class HomeFragment extends Fragment {
             this.chart.setNoDataText("Collecting Data, please wait...");
             this.chart.setNoDataTextColor(rgb("#1da554"));
         }
+        this.chart.invalidate();
 
     }
 }
