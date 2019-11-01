@@ -239,8 +239,9 @@ public class HomeFragment extends Fragment {
         if (this.chart != null && this.chart.getData() == null) {
             this.chart.setNoDataText("Collecting Data, please wait...");
             this.chart.setNoDataTextColor(rgb("#1da554"));
+            this.chart.invalidate();
         }
-        this.chart.invalidate();
+
 
     }
 }

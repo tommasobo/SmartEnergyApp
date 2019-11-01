@@ -35,7 +35,7 @@
         app:layout_constraintTop_toBottomOf="@+id/topBar" >
 
         <TextView
-            android:id="@+id/Today"
+            android:id="@+id/data_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="178dp"
@@ -43,7 +43,7 @@
             android:layout_marginEnd="175dp"
             android:layout_marginBottom="11dp"
             android:gravity="center"
-            android:text="Today"
+            android:text="Today's Time per Mode"
             android:textColor="#000000"
             android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
