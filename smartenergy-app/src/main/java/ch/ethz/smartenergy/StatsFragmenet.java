@@ -2,6 +2,7 @@ package ch.ethz.smartenergy;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,11 +10,27 @@ import android.view.ViewGroup;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
+import org.joda.time.DateTime;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class StatsFragmenet extends Fragment {
@@ -28,14 +45,14 @@ public class StatsFragmenet extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
-        //updateChart();
+        updateChart();
 
 
     }
 
-    /*private void updateChart() {
+    private void updateChart() {
         View v = getView();
-        LineChart chart = (LineChart) v.findViewById(R.id.chart);
+        LineChart chart = v.findViewById(R.id.chart);
 
 
         JSONObject json = new JSONObject();
@@ -46,45 +63,46 @@ public class StatsFragmenet extends Fragment {
             Log.d("Error", err.toString());
         }
 
-        SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
-        JSONObject todayData = new JSONObject();
+        List<JSONObject> listJson = new ArrayList<>();
+        JSONObject finalJson = json;
+        Iterator <?> keys = finalJson.keys();
 
-        try {
-            todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
-            todayData = json.getJSONObject(date.format(Calendar.getInstance().get));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        todayData.getJSONObject()
-
-        int i = 0;
-        for (String activity : Constants.ListModes) {
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
             try {
-                if (todayData.getInt(activity) != 0) {
-                    pieChartEntries.add(new PieEntry(todayData.getInt(activity), activity));
-                    colors.add(material_colors[i]);
+                if (finalJson.get(key) instanceof JSONObject) {
+                    JSONObject tempJson = finalJson.getJSONObject(key);
+                    String[] out = key.split("-");
+
+                    Date date = new Date();
+                    DateTime datetime = new DateTime(date);
+                    if(out[1].equals(datetime.toString("MM"))) {
+                        listJson.add(tempJson);
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            i++;
         }
 
+        System.out.println(listJson);
         List<Entry> entries = new ArrayList<>();
-        for (YourData data : dataObjects) {
-            // turn your data into Entry objects
-            entries.add(new Entry(data.getValueX(), data.getValueY()));
 
-        }
+        listJson.forEach(e-> {
+            try {
+                entries.add(new Entry());
+                entries.add(new Entry(2, e.getInt("Still")));
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        });
+
 
         LineDataSet dataSet = new LineDataSet(entries, "Label"); // add entries to dataset
-        dataSet.setColor(...);
-        dataSet.setValueTextColor(...); // styling, ...
         LineData lineData = new LineData(dataSet);
         chart.setData(lineData);
         chart.invalidate(); // refresh
-    }*/
+    }
 
     private String read(Context context, String fileName) {
         try {
