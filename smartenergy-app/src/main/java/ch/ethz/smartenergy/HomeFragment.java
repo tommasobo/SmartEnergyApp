@@ -158,6 +158,10 @@ public class HomeFragment extends Fragment {
             i++;
         }
 
+        if (pieChartEntries.size() == 0) {
+            return;
+        }
+
         // Outside values
         Legend l = this.chart.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
@@ -186,7 +190,6 @@ public class HomeFragment extends Fragment {
 
         this.chart.getDescription().setEnabled(false);
         this.chart.animateXY(1000, 1000);
-
         this.chart.invalidate();
 
     }
