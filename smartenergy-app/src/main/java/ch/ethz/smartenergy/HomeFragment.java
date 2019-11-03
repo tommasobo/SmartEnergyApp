@@ -194,6 +194,7 @@ public class HomeFragment extends Fragment {
         this.chart.setData(data);
         data.setValueTextSize(11f);
 
+        this.chart.setExtraBottomOffset(18f);
         this.chart.getDescription().setEnabled(false);
         this.chart.animateXY(1000, 1000);
         this.chart.invalidate();
