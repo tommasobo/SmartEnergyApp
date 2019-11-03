@@ -21,6 +21,7 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.awt.font.NumericShaper;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -169,24 +170,26 @@ public class HomeFragment extends Fragment {
         l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
         l.setDirection(Legend.LegendDirection.LEFT_TO_RIGHT);
         l.setWordWrapEnabled(true);
-        l.setDrawInside(false);
+        l.setDrawInside(true);
 
         PieDataSet set = new PieDataSet(pieChartEntries, "");
 
         set.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
         set.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
         set.setValueLinePart1OffsetPercentage(100f); /** When valuePosition is OutsideSlice, indicates offset as percentage out of the slice size */
-        set.setValueLinePart1Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
-        set.setValueLinePart2Length(0.6f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
+        set.setValueLinePart1Length(0.45f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
+        set.setValueLinePart2Length(0.48f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
 
-        this.chart.setExtraOffsets(0.f, 5.f, 0.f, 5.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
+        this.chart.setExtraOffsets(0.f, 6.f, 0.f, 6.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
+        this.chart.setCenterText("Minutes Per Transportation Mode");
+        this.chart.setClickable(false);
+        this.chart.setHighlightPerTapEnabled(false);
 
         set.setColors(colors);
 
         PieData data = new PieData(set);
         this.chart.setData(data);
-        data.setValueTextSize(10f);
-
+        data.setValueTextSize(11f);
 
         this.chart.getDescription().setEnabled(false);
         this.chart.animateXY(1000, 1000);

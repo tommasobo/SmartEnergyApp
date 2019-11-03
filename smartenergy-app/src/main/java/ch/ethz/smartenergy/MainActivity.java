@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
                         selected = "Home";
                         break;
                     case R.id.nav_stats:
-                        selectedFragment = new StatsFragmenet();
+                        selectedFragment = new StatsFragment();
                         selected = "Stats";
                         break;
                     case R.id.nav_settings:

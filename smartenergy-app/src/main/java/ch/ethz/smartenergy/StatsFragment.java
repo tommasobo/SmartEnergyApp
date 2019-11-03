@@ -7,20 +7,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.AxisBase;
-import com.github.mikephil.charting.components.Description;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.formatter.IAxisValueFormatter;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import org.joda.time.DateTime;
 import org.json.JSONException;
@@ -34,8 +31,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -44,7 +39,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class StatsFragmenet extends Fragment {
+public class StatsFragment extends Fragment {
 
     @Nullable
     @Override
@@ -56,6 +51,11 @@ public class StatsFragmenet extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
+        Spinner spinner = (Spinner) getView().findViewById(R.id.spinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
+                R.array.list_options, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
         updateChart();
 
 
@@ -115,9 +115,8 @@ public class StatsFragmenet extends Fragment {
                         ex.printStackTrace();
                     }
                     if (e.getInt(activity) != 0) {
-                        entries.add(new Entry(cal.getTime().toInstant().
-                                atZone(ZoneId.systemDefault()).toLocalDate().
-                                getDayOfMonth(), e.getInt(activity), activity));
+                        Date date = cal.getTime();
+                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getInt(activity), activity));
                     }
                 } catch (JSONException ex) {
                     ex.printStackTrace();
@@ -138,27 +137,28 @@ public class StatsFragmenet extends Fragment {
             i++;
         }
 
-        ArrayList<String> xVals = new ArrayList<>();
-        for (int j = 0; j <= new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth() ; j++) {
-            xVals.add(j + " " + (new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH)));
-        }
 
-        Description desc = new Description();
-        desc.setText("Minutes Per Transportation Mode");
-        chart.setDescription(desc);
+
+        chart.getDescription().setText("");
         chart.setData(lineData);
-        chart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
+
         chart.getAxisRight().setEnabled(false);
-        chart.getXAxis().setDrawGridLines(false);
         chart.getAxisLeft().setDrawGridLines(true);
-        chart.getXAxis().setAxisLineWidth(1.2f);
         chart.getAxisLeft().setAxisLineWidth(1.2f);
-        chart.getAxisLeft().setAxisMinimum(0);
         chart.getAxisLeft().setGridLineWidth(0.4f);
+        chart.getAxisLeft().setAxisMinimum(0);
+
         XAxis xAxis = chart.getXAxis();
-        xAxis.setGranularity(1f);
-        xAxis.setGranularityEnabled(true);
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(xVals));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setValueFormatter(new MonthViewFormatter());
+        chart.getXAxis().setAxisMinimum(lineData.getXMin());
+        chart.getXAxis().setAxisMaximum(lineData.getXMax());
+        chart.getXAxis().setLabelCount(3, true);
+        chart.getXAxis().setGranularityEnabled(true);
+        chart.getXAxis().setCenterAxisLabels(false);
+        chart.getXAxis().setAxisLineWidth(1.2f);
+        chart.getXAxis().setDrawGridLines(false);
+
         chart.invalidate(); // refresh
     }
 
