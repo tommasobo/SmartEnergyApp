@@ -115,9 +115,9 @@ public class StatsFragment extends Fragment {
                     } catch (ParseException ex) {
                         ex.printStackTrace();
                     }
-                    if (e.getInt(activity) != 0) {
+                    if (e.getJSONObject(activity).getInt("time") != 0) {
                         Date date = cal.getTime();
-                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getInt(activity), activity));
+                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
                     }
                 } catch (JSONException ex) {
                     ex.printStackTrace();
