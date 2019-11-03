@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -170,7 +171,25 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
     }
 
-    private void updateJSON(String key) {
+    private double calculateDistance(ArrayList<LocationScan> locationScans) {
+        double lon1 = locationScans.get(0).getLongitude();
+        double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
+        double lat1 = locationScans.get(0).getLatitude();
+        double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
+
+        double R = 6371; //kilometers
+        double dLat = Math.toRadians(lat2-lat1);
+        double dLng = Math.toRadians(lon2-lon1);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLng/2) * Math.sin(dLng/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double distance = R * c;
+
+        return distance;
+    }
+
+    private void updateJSON(String key, ArrayList<LocationScan> locationScans) {
 
         boolean isFilePresent = isFilePresent(this, "data.json");
         if(isFilePresent) {
@@ -209,13 +228,15 @@ public class MainActivity extends AppCompatActivity {
         if(exists){
             try {
                 for (String mode: Constants.ListModes) {
-                    this.mostPresentPersistent.put(mode, activity.getInt(mode));
-                    activity.put(mode, this.mostPresentPersistent.get(mode));
+                    this.mostPresentPersistent.put(mode, activity.getJSONObject(mode).getInt("time"));
+                    activity.getJSONObject(mode).put("time", this.mostPresentPersistent.get(mode));
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
                     this.mostPresentPersistent.put(key, temp + 1);
-                    activity.put(key, this.mostPresentPersistent.get(key));
+                    activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
+                    double d = activity.getJSONObject(key).getDouble("distance");
+                    activity.getJSONObject(key).put("distance", d + calculateDistance(locationScans));
                 }
             }catch (JSONException err){
                 Log.d("Error", err.toString());
@@ -225,12 +246,16 @@ public class MainActivity extends AppCompatActivity {
                 activity.put("date", Calendar.getInstance().getTime());
                 for (String mode : Constants.ListModes) {
                     this.mostPresentPersistent.put(mode, 0);
-                    activity.put(mode, this.mostPresentPersistent.get(mode));
+                    JSONObject data = new JSONObject();
+                    data.put("time", this.mostPresentPersistent.get(mode));
+                    data.put("distance", 0.0);
+                    activity.put(mode, data);
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
                     this.mostPresentPersistent.put(key, temp + 1);
-                    activity.put(key, this.mostPresentPersistent.get(key));
+                    activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
+                    activity.getJSONObject(key).put("distance", calculateDistance(locationScans));
                 }
 
             } catch (JSONException e) {
@@ -271,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
 
                     predict_NN(scan.getAccReadings());
 
-                    updateData(isStill, predictionsXGBoost);
+                    updateData(isStill, predictionsXGBoost, scan.getLocationScans());
 
                     HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
                     if (homeFragment != null) {
@@ -287,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
 
     };
 
-    private void updateData(boolean isStill, float[] predictionsXGBoost) {
+    private void updateData(boolean isStill, float[] predictionsXGBoost, ArrayList<LocationScan> locationScans) {
         List<Float> listPredictions = new ArrayList<Float>();
         for (float prediction : predictions) {
             listPredictions.add(prediction);
@@ -305,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
 
-            updateJSON(key);
+            updateJSON(key, locationScans);
 
             // Update Home Fragment
             HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;

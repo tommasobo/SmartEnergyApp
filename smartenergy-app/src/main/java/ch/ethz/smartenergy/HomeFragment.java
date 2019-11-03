@@ -152,8 +152,8 @@ public class HomeFragment extends Fragment {
         int i = 0;
         for (String activity : Constants.ListModes) {
             try {
-                if (todayData.getInt(activity) != 0) {
-                    pieChartEntries.add(new PieEntry(todayData.getInt(activity), activity));
+                if (todayData.getJSONObject(activity).getInt("time") != 0) {
+                    pieChartEntries.add(new PieEntry(todayData.getJSONObject(activity).getInt("time"), activity));
                     colors.add(material_colors[i]);
                 }
             } catch (JSONException e) {
