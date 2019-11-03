@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -50,6 +51,7 @@ public class HomeFragment extends Fragment {
     private TextView probabilityEbike;
     private TextView probabilityMotorcycle;
     private PieChart chart;
+    private Button button;
 
 
     @Override
@@ -76,6 +78,7 @@ public class HomeFragment extends Fragment {
         probabilityBicycle = v.findViewById(R.id.text_predicted_bicycle);
         probabilityEbike = v.findViewById(R.id.text_predicted_ebike);
         probabilityMotorcycle = v.findViewById(R.id.text_predicted_motorcycle);
+        button = v.findViewById(R.id.button_start);
 
         probabilityOnFoot.setText(getString(R.string.on_foot, 0.00));
         probabilityTrain.setText(getString(R.string.train, 0.00));
@@ -247,6 +250,7 @@ public class HomeFragment extends Fragment {
             this.chart.setNoDataTextColor(rgb("#1da554"));
             this.chart.invalidate();
         }
+        this.button.setText(R.string.start_scanning_on_click);
 
 
     }

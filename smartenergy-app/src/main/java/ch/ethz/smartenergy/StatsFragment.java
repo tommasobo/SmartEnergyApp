@@ -56,6 +56,7 @@ public class StatsFragment extends Fragment {
                 R.array.list_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
+        spinner.setSelection(adapter.getPosition("Current Month"));
         updateChart();
 
 
@@ -153,7 +154,7 @@ public class StatsFragment extends Fragment {
         xAxis.setValueFormatter(new MonthViewFormatter());
         chart.getXAxis().setAxisMinimum(lineData.getXMin());
         chart.getXAxis().setAxisMaximum(lineData.getXMax());
-        chart.getXAxis().setLabelCount(3, true);
+        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), true);
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
         chart.getXAxis().setAxisLineWidth(1.2f);
@@ -168,6 +169,17 @@ public class StatsFragment extends Fragment {
         int g = (color >> 8) & 0xFF;
         int b = (color >> 0) & 0xFF;
         return Color.rgb(r, g, b);
+    }
+
+
+    private int getLabelNumberForMonth(int totalValue) {
+        if (totalValue < 10) {
+            return totalValue;
+        } else if (totalValue < 20) {
+            return totalValue / 2;
+        } else {
+            return totalValue / 3;
+        }
     }
 
 

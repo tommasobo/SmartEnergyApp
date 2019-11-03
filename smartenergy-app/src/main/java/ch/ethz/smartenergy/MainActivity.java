@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -75,6 +76,11 @@ public class MainActivity extends AppCompatActivity {
     private List<Double> train_mean;
     private List<Double> train_std;
 
+    private final Fragment homeFragment = new HomeFragment();
+    private final Fragment statsFragment = new StatsFragment();
+    private final Fragment settingsFragment = new SettingsFragment();
+    private Fragment currentFragment = homeFragment;
+
     private Map<String, Integer> mostPresentWindow;
     private Map<String, Integer> mostPresentPersistent;
 
@@ -119,37 +125,35 @@ public class MainActivity extends AppCompatActivity {
 
         registerReceiver();
 
-        //I added this if statement to keep the selected fragment when rotating the device
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                    new HomeFragment(), "Home").commit();
-        }
 
+        this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_HOME).hide(settingsFragment).commit();
+        this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
+        this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container,homeFragment, Constants.TAG_FRAGMENT_SETTINGS).commit();
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
             item -> {
-                Fragment selectedFragment = null;
-                String selected = null;
 
+                FragmentManager fragmentManager = getSupportFragmentManager();
                 switch (item.getItemId()) {
                     case R.id.nav_home:
-                        selectedFragment = new HomeFragment();
-                        selected = "Home";
-                        break;
+                        fragmentManager.beginTransaction().hide(currentFragment).
+                                show(homeFragment).commit();
+                        currentFragment = homeFragment;
+                        return true;
+
                     case R.id.nav_stats:
-                        selectedFragment = new StatsFragment();
-                        selected = "Stats";
-                        break;
+                        fragmentManager.beginTransaction().hide(currentFragment).
+                                show(statsFragment).commit();
+                        currentFragment = statsFragment;
+                        return true;
+
                     case R.id.nav_settings:
-                        selectedFragment = new SettingsFragment();
-                        selected = "Settings";
-                        break;
+                        fragmentManager.beginTransaction().hide(currentFragment).
+                                show(settingsFragment).commit();
+                        currentFragment = settingsFragment;
+                        return true;
                 }
-
-                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                        selectedFragment, selected).commit();
-
 
                 return true;
             };
@@ -269,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
                     updateData(isStill, predictionsXGBoost);
 
-                    HomeFragment homeFragment = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
+                    HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
                     if (homeFragment != null) {
                         homeFragment.showResult();
                         homeFragment.appendResult();
@@ -304,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
             updateJSON(key);
 
             // Update Home Fragment
-            HomeFragment homeFragment = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
+            HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
             if (homeFragment != null) {
                 homeFragment.updateChart();
             }
@@ -479,22 +483,22 @@ public class MainActivity extends AppCompatActivity {
     private double avgAccX(ArrayList<SensorReading> accReadings) {
         if (accReadings.size() == 0) return 0;
 
-        accReadings.stream().forEach(val -> Math.abs(val.getValueOnXAxis()));
-        return accReadings.stream().mapToDouble(val -> val.getValueOnXAxis()).average().orElse(0.0);
+        accReadings.forEach(val -> Math.abs(val.getValueOnXAxis()));
+        return accReadings.stream().mapToDouble(SensorReading::getValueOnXAxis).average().orElse(0.0);
     }
 
     private double avgAccY(ArrayList<SensorReading> accReadings) {
         if (accReadings.size() == 0) return 0;
 
-        accReadings.stream().forEach(val -> Math.abs(val.getValueOnYAxis()));
-        return accReadings.stream().mapToDouble(val -> val.getValueOnYAxis()).average().orElse(0.0);
+        accReadings.forEach(val -> Math.abs(val.getValueOnYAxis()));
+        return accReadings.stream().mapToDouble(SensorReading::getValueOnYAxis).average().orElse(0.0);
     }
 
     private double avgAccZ(ArrayList<SensorReading> accReadings) {
         if (accReadings.size() == 0) return 0;
 
-        accReadings.stream().forEach(val -> Math.abs(val.getValueOnZAxis()));
-        return accReadings.stream().mapToDouble(val -> val.getValueOnZAxis()).average().orElse(0.0);
+        accReadings.forEach(val -> Math.abs(val.getValueOnZAxis()));
+        return accReadings.stream().mapToDouble(SensorReading::getValueOnZAxis).average().orElse(0.0);
     }
 
     private double calculateMeanMagnitude(ArrayList<SensorReading> accReadings) {
@@ -646,10 +650,8 @@ public class MainActivity extends AppCompatActivity {
      */
     public void startScanning(View view) {
         // Update Home Fragment
-        HomeFragment homeFragment = ((HomeFragment) getSupportFragmentManager().findFragmentByTag("Home"));
-        if (homeFragment != null) {
-            homeFragment.startScanning();
-        }
+        HomeFragment hF = (HomeFragment) homeFragment;
+        hF.startScanning();
         view.setEnabled(false);
         Intent serviceIntent = new Intent(this, DataCollectionService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

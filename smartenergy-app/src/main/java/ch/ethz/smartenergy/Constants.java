@@ -16,4 +16,8 @@ public class Constants {
     public static final double MaxAccStill = 0.6;
 
     public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
+
+    public static final String TAG_FRAGMENT_HOME = "fragment_home";
+    public static final String TAG_FRAGMENT_STATS = "fragment_stats";
+    public static final String TAG_FRAGMENT_SETTINGS = "fragment_settings";
 }
