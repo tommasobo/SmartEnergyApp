@@ -332,11 +332,11 @@ public class MainActivity extends AppCompatActivity {
 
             updateJSON(key, locationScans);
 
-            // Update Home Fragment
+            // Update Home and Stats Fragment
             HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-            if (homeFragment != null) {
-                homeFragment.updateChart();
-            }
+            homeFragment.updateChart();
+            StatsFragment statsFragment = (StatsFragment) MainActivity.this.statsFragment;
+            statsFragment.updateChart();
 
             this.internalCycle = 0;
             this.mostPresentWindow = new HashMap<>();

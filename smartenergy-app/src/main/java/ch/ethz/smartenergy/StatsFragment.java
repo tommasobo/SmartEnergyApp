@@ -51,7 +51,7 @@ public class StatsFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
-        Spinner spinner = (Spinner) getView().findViewById(R.id.spinner);
+        Spinner spinner = getView().findViewById(R.id.spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
                 R.array.list_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -62,7 +62,7 @@ public class StatsFragment extends Fragment {
 
     }
 
-    private void updateChart() {
+    void updateChart() {
         View v = getView();
         LineChart chart = v.findViewById(R.id.chart);
 
@@ -152,8 +152,8 @@ public class StatsFragment extends Fragment {
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new MonthViewFormatter());
-        chart.getXAxis().setAxisMinimum(lineData.getXMin());
-        chart.getXAxis().setAxisMaximum(lineData.getXMax());
+        chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
+        chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
         chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), true);
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
@@ -161,6 +161,34 @@ public class StatsFragment extends Fragment {
         chart.getXAxis().setDrawGridLines(false);
 
         chart.invalidate(); // refresh
+    }
+
+    private int getMinXAxisPerMonth(float minValueFloat) {
+        int minValue = (int) minValueFloat;
+        if (minValue <= 2) {
+            return 1;
+        }
+        Calendar cal = Calendar.getInstance();
+        int dayThisMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        if (dayThisMonth - minValue <= 0) {
+            return minValue - 2;
+        } else if (dayThisMonth - minValue == 1) {
+            return minValue - 1;
+        }
+        return minValue;
+    }
+
+    private int getMaxXAxisPerMonth(float maxValueFloat) {
+        int maxValue = (int) maxValueFloat;
+        if (maxValue <= 2) {
+            return 3;
+        }
+        Calendar cal = Calendar.getInstance();
+        int dayThisMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+        if (dayThisMonth - maxValue <= 1) {
+            return dayThisMonth;
+        }
+        return maxValue;
     }
 
     private int rgb(String s) {
@@ -173,7 +201,9 @@ public class StatsFragment extends Fragment {
 
 
     private int getLabelNumberForMonth(int totalValue) {
-        if (totalValue < 10) {
+        if (totalValue <= 3) {
+            return 3;
+        } else if (totalValue < 10) {
             return totalValue;
         } else if (totalValue < 20) {
             return totalValue / 2;
