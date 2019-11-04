@@ -154,7 +154,7 @@ public class StatsFragment extends Fragment {
         xAxis.setValueFormatter(new MonthViewFormatter());
         chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
         chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
-        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), true);
+        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), false);
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
         chart.getXAxis().setAxisLineWidth(1.2f);
@@ -201,6 +201,8 @@ public class StatsFragment extends Fragment {
 
 
     private int getLabelNumberForMonth(int totalValue) {
+        Calendar cal = Calendar.getInstance();
+        int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
         if (totalValue <= 3) {
             return 3;
         } else if (totalValue < 10) {
