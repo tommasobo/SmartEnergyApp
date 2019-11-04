@@ -52,4 +52,47 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/todayBar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/text_settings_diet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Type of diet" />
+
+            <Spinner
+                android:id="@+id/spinner_settings_diet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/text_settings_car"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Type of car" />
+
+            <Spinner
+                android:id="@+id/spinner_settings_car"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+    </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

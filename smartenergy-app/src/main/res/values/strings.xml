@@ -28,4 +28,15 @@
         <item>Current Year</item>
         <item>All Time</item>
     </string-array>
+    <string-array name="list_diet">
+        <item>Default</item>
+        <item>Meat based</item>
+        <item>Plant based</item>
+    </string-array>
+    <string-array name="list_car">
+        <item>Default</item>
+        <item>Sports car</item>
+        <item>Small car</item>
+        <item>Electric car</item>
+    </string-array>
 </resources>
