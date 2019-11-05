@@ -172,6 +172,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double calculateDistance(ArrayList<LocationScan> locationScans) {
+
+        if (locationScans == null || locationScans.isEmpty()) {
+            return 0.0;
+        }
+
         double lon1 = locationScans.get(0).getLongitude();
         double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
         double lat1 = locationScans.get(0).getLatitude();

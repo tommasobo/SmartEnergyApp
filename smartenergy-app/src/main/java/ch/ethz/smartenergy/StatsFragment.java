@@ -3,6 +3,7 @@ package ch.ethz.smartenergy;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,10 +15,12 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import org.joda.time.DateTime;
 import org.json.JSONException;
@@ -29,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -65,7 +69,7 @@ public class StatsFragment extends Fragment {
     void updateChart() {
         View v = getView();
         LineChart chart = v.findViewById(R.id.chart);
-
+        chart.setNoDataText("No data available for the selected graph.");
 
         JSONObject json = new JSONObject();
 
@@ -101,7 +105,10 @@ public class StatsFragment extends Fragment {
             }
         }
 
+        chart.clear();
+        chart.invalidate();
         LineData lineData = new LineData();
+
         int i = 0;
         for (String activity: Constants.ListModes) {
             List<Entry> entries = new ArrayList<>();
@@ -138,22 +145,43 @@ public class StatsFragment extends Fragment {
             i++;
         }
 
-
-
-        chart.getDescription().setText("");
+        Calendar cal = Calendar.getInstance();
+        String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
+        chart.getDescription().setText("Minutes Per Transportation Mode for " + selectedFilterText);
+        DisplayMetrics ds = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(ds);
+        int width = ds.widthPixels;
+        int height = ds.heightPixels;
+        chart.getDescription().setTextSize(12f);
         chart.setData(lineData);
+        chart.getLineData().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return ("" + (int)value);
+            }
+        });
 
         chart.getAxisRight().setEnabled(false);
         chart.getAxisLeft().setDrawGridLines(true);
         chart.getAxisLeft().setAxisLineWidth(1.2f);
-        chart.getAxisLeft().setGridLineWidth(0.4f);
+        chart.getAxisLeft().setGridLineWidth(0.7f);
+        chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, AxisBase axis) {
+                return ("" + (int)value);
+            }
+        });
+        chart.getAxisRight().setDrawGridLines(false);
         chart.getAxisLeft().setAxisMinimum(0);
-
+        chart.getData().setValueTextColor(Color.BLACK);
+        chart.getData().setValueTextSize(10);
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new MonthViewFormatter());
-        chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
-        chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+        if (lineData.getXMin() != lineData.getXMax()) {
+            chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
+            chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+        }
         chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), false);
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
