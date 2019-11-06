@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 
 public class HomeFragment extends Fragment {
@@ -133,10 +134,12 @@ public class HomeFragment extends Fragment {
             Log.d("Error", err.toString());
         }
 
+
+        TimeZone tz = TimeZone.getDefault();
         SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
         JSONObject todayData = new JSONObject();
         try {
-            todayData = json.getJSONObject(date.format(Calendar.getInstance().getTime()));
+            todayData = json.getJSONObject(date.format(Calendar.getInstance(tz).getTime()));
         } catch (JSONException e) {
             e.printStackTrace();
         }

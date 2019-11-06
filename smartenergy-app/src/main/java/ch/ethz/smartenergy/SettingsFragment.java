@@ -61,9 +61,6 @@ public class SettingsFragment extends Fragment {
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putString("diet", dietSpinner.getSelectedItem().toString());
                 editor.apply();
-
-                System.out.println("SIX CONSOOOOLES");
-                System.out.println(dietSpinner.getSelectedItem().toString());
             }
 
             @Override
@@ -80,9 +77,6 @@ public class SettingsFragment extends Fragment {
                 SharedPreferences.Editor editor = preferences.edit();
                 editor.putString("car", carSpinner.getSelectedItem().toString());
                 editor.apply();
-
-                System.out.println("SIX CONSOOOOLES");
-                System.out.println(carSpinner.getSelectedItem().toString());
             }
 
             @Override
