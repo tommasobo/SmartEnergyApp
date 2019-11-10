@@ -61,6 +61,7 @@ public class StatsFragment extends Fragment {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setSelection(adapter.getPosition("Current Month"));
+
         updateChart();
 
 
