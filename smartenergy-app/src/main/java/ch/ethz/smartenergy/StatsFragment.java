@@ -174,16 +174,20 @@ public class StatsFragment extends Fragment {
         });
         chart.getAxisRight().setDrawGridLines(false);
         chart.getAxisLeft().setAxisMinimum(0);
-        chart.getData().setValueTextColor(Color.BLACK);
-        chart.getData().setValueTextSize(10);
+        //chart.getData().setValueTextColor(Color.BLACK);
+        //chart.getData().setValueTextSize(10);
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new MonthViewFormatter());
+        boolean forceLabelCount = false;
         if (lineData.getXMin() != lineData.getXMax()) {
             chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
             chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
         }
-        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), false);
+        if (getLabelNumberForMonth(listJson.size()) > 3) {
+            forceLabelCount = true;
+        }
+        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
         chart.getXAxis().setAxisLineWidth(1.2f);
