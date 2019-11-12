@@ -74,24 +74,24 @@ public class HomeFragment extends Fragment {
         View v = getView();
 
         dataTitle = getView().findViewById(R.id.data_title);
-        probabilityOnFoot = v.findViewById(R.id.text_predicted_foot);
+        /*probabilityOnFoot = v.findViewById(R.id.text_predicted_foot);
         probabilityTrain = v.findViewById(R.id.text_predicted_train);
         probabilityTramway = v.findViewById(R.id.text_predicted_tramway);
         probabilityBus = v.findViewById(R.id.text_predicted_bus);
         probabilityCar = v.findViewById(R.id.text_predicted_car);
         probabilityBicycle = v.findViewById(R.id.text_predicted_bicycle);
         probabilityEbike = v.findViewById(R.id.text_predicted_ebike);
-        probabilityMotorcycle = v.findViewById(R.id.text_predicted_motorcycle);
+        probabilityMotorcycle = v.findViewById(R.id.text_predicted_motorcycle);*/
         button = v.findViewById(R.id.button_start);
 
-        probabilityOnFoot.setText(getString(R.string.on_foot, 0.00));
+        /*probabilityOnFoot.setText(getString(R.string.on_foot, 0.00));
         probabilityTrain.setText(getString(R.string.train, 0.00));
         probabilityBus.setText(getString(R.string.bus, 0.00));
         probabilityCar.setText(getString(R.string.car, 0.00));
         probabilityTramway.setText(getString(R.string.tramway, 0.00));
         probabilityBicycle.setText(getString(R.string.bicycle, 0.00));
         probabilityEbike.setText(getString(R.string.ebike, 0.00));
-        probabilityMotorcycle.setText(getString(R.string.motorcycle, 0.00));
+        probabilityMotorcycle.setText(getString(R.string.motorcycle, 0.00));*/
         chart = v.findViewById(R.id.chart_graph);
         this.chart.setNoDataText("No Data Available for Today");
         this.updateChart();
@@ -263,26 +263,26 @@ public class HomeFragment extends Fragment {
         float[] predictions = this.mainActivity.getPredictionsNN();
         Log.d("PROBABILITIES: ", Arrays.toString(predictions));
 
-        probabilityOnFoot.append(String.format("%s %.2f %s", " vs", predictions[0] * 100, " %"));
+        /*probabilityOnFoot.append(String.format("%s %.2f %s", " vs", predictions[0] * 100, " %"));
         probabilityTrain.append(String.format("%s %.2f %s", " vs", predictions[1] * 100, " %"));
         probabilityBus.append(String.format("%s %.2f %s", " vs", predictions[2] * 100, " %"));
         probabilityCar.append(String.format("%s %.2f %s", " vs", predictions[3] * 100, " %"));
         probabilityTramway.append(String.format("%s %.2f %s", " vs", predictions[4] * 100, " %"));
         probabilityBicycle.append(String.format("%s %.2f %s", " vs", predictions[5] * 100, " %"));
         probabilityEbike.append(String.format("%s %.2f %s", " vs", predictions[6] * 100, " %"));
-        probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100, " %"));
+        probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100, " %"));*/
     }
 
     void showResult() {
         float[] predictions = this.mainActivity.getPredictions();
-        probabilityOnFoot.setText(getString(R.string.on_foot, predictions[0] * 100));
+        /*probabilityOnFoot.setText(getString(R.string.on_foot, predictions[0] * 100));
         probabilityTrain.setText(getString(R.string.train, predictions[1] * 100));
         probabilityBus.setText(getString(R.string.bus, predictions[2] * 100));
         probabilityCar.setText(getString(R.string.car, predictions[3] * 100));
         probabilityTramway.setText(getString(R.string.tramway, predictions[4] * 100));
         probabilityBicycle.setText(getString(R.string.bicycle, predictions[5] * 100));
         probabilityEbike.setText(getString(R.string.ebike, predictions[6] * 100));
-        probabilityMotorcycle.setText(getString(R.string.motorcycle, predictions[7] * 100));
+        probabilityMotorcycle.setText(getString(R.string.motorcycle, predictions[7] * 100));*/
     }
 
     void startScanning() {

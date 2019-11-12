@@ -53,12 +53,11 @@
             android:id="@+id/rightButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="135dp"
             android:background="@android:color/transparent"
             android:onClick="rightClickTopBar"
+            android:padding="11sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/titleGraph"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_keyboard_arrow_right_black_24dp" />
 
@@ -66,10 +65,9 @@
             android:id="@+id/leftButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="137dp"
             android:background="@android:color/transparent"
+            android:padding="11sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/titleGraph"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_keyboard_arrow_left_black_24dp" />

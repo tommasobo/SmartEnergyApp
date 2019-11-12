@@ -28,11 +28,10 @@
         android:layout_width="match_parent"
         android:layout_height="38dp"
         android:background="#f0f7e8"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/topBar" >
+        app:layout_constraintTop_toBottomOf="@+id/topBar">
 
         <TextView
             android:id="@+id/data_title"
@@ -55,12 +54,11 @@
             android:id="@+id/rightButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="135dp"
             android:background="@android:color/transparent"
             android:onClick="rightClickTopBar"
+            android:padding="11sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/Today"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_keyboard_arrow_right_black_24dp" />
 
@@ -68,11 +66,10 @@
             android:id="@+id/leftButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="137dp"
             android:background="@android:color/transparent"
             android:onClick="leftClickTopBar"
+            android:padding="11sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/Today"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_keyboard_arrow_left_black_24dp" />
@@ -82,136 +79,87 @@
         android:id="@+id/chart_graph"
         android:layout_width="338dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent=".45"
-        app:layout_constraintStart_toStartOf="@+id/linearLayout"
-        app:layout_constraintTop_toTopOf="@+id/linearLayout"
-        app:layout_constraintWidth_percent=".82" />
-
-    <TextView
-        android:id="@+id/text_predicted_foot"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="@string/on_foot"
-        android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@+id/text_predicted_train"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/bottomContainer"
-        app:layout_constraintTop_toTopOf="@+id/bottomContainer" />
-
-    <TextView
-        android:id="@+id/text_predicted_train"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/train"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_foot" />
-
-    <TextView
-        android:id="@+id/text_predicted_tramway"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/tramway"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_train" />
-
-    <TextView
-        android:id="@+id/text_predicted_bus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/bus"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_tramway" />
-
-    <TextView
-        android:id="@+id/text_predicted_car"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/car"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_bus" />
-
-    <TextView
-        android:id="@+id/text_predicted_bicycle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/bicycle"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_car" />
-
-    <TextView
-        android:id="@+id/text_predicted_ebike"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/ebike"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_bicycle" />
-
-    <TextView
-        android:id="@+id/text_predicted_motorcycle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/motorcycle"
-        android:textSize="10sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_predicted_ebike" />
-
-    <Button
-        android:id="@+id/button_start"
-        android:layout_width="280dp"
-        android:layout_height="35dp"
-        android:layout_marginStart="36dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="36dp"
-        android:background="#bdc4b6  "
-        android:onClick="startScanning"
-        android:text="@string/start_scanning"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.481"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_predicted_motorcycle" />
-
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="409dp"
-        android:layout_height="358dp"
-        android:background="#e1e2e1"
-        android:orientation="horizontal"
-        android:visibility="invisible"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="4dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomContainer"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent=".45"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/todayBar" />
+        app:layout_constraintTop_toBottomOf="@+id/todayBar"
+        app:layout_constraintWidth_percent=".82" />
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottomContainer"
-        android:layout_width="415dp"
+        android:layout_width="0dp"
         android:layout_height="294dp"
         android:background="#ffffff"
-        android:orientation="horizontal"
-        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-        tools:visibility="invisible" />
+        app:layout_constraintTop_toBottomOf="@+id/chart_graph">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="16dp"
+            android:background="#f0f7e8"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+        <Button
+            android:id="@+id/button_start"
+            android:layout_width="280dp"
+            android:layout_height="35dp"
+            android:layout_marginBottom="64dp"
+            android:background="#bdc4b6  "
+            android:onClick="startScanning"
+            android:text="@string/start_scanning"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scrollbarThumbHorizontal="@android:color/primary_text_light"
+            android:text="We think you are currently"
+            android:textColor="@color/colorBlack"
+            android:textSize="22sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="using a car"
+            android:textColor="@android:color/primary_text_light"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="4dp"
+            android:background="#f0f7e8"
+            app:layout_constraintBottom_toTopOf="@+id/textView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
