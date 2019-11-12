@@ -43,7 +43,7 @@
             android:layout_marginEnd="175dp"
             android:layout_marginBottom="11dp"
             android:gravity="center"
-            android:text="Today's Time per Mode"
+            android:text="Time per Mode"
             android:textColor="#000000"
             android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -52,11 +52,12 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/imageButton"
+            android:id="@+id/rightButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="135dp"
             android:background="@android:color/transparent"
+            android:onClick="rightClickTopBar"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/Today"
@@ -64,11 +65,12 @@
             app:srcCompat="@drawable/ic_keyboard_arrow_right_black_24dp" />
 
         <ImageButton
-            android:id="@+id/imageButton2"
+            android:id="@+id/leftButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="137dp"
             android:background="@android:color/transparent"
+            android:onClick="leftClickTopBar"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/Today"
             app:layout_constraintStart_toStartOf="parent"

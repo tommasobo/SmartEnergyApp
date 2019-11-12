@@ -66,6 +66,7 @@ import ch.ethz.smartenergy.service.SensorScanPeriod;
 public class MainActivity extends AppCompatActivity {
 
     private int internalCycle = 0;
+    private int selectedViewGraph = 0;
 
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int PERMISSION_ALL = 4242;
@@ -690,6 +691,34 @@ public class MainActivity extends AppCompatActivity {
             this.startService(serviceIntent);
         }
 
+    }
+
+    public void rightClickTopBar(View view) {
+        getNextElement(1);
+        StatsFragment sF = (StatsFragment) statsFragment;
+        HomeFragment hF = (HomeFragment) homeFragment;
+        //sF.menuClick(this.selectedViewGraph);
+        hF.menuClick(this.selectedViewGraph);
+    }
+
+    public void leftClickTopBar(View view) {
+        getNextElement(-1);
+        StatsFragment sF = (StatsFragment) statsFragment;
+        HomeFragment hF = (HomeFragment) homeFragment;
+        //sF.menuClick(this.selectedViewGraph);
+        hF.menuClick(this.selectedViewGraph);
+    }
+
+    private void getNextElement(int indexToAdd) {
+        if ((this.selectedViewGraph == 2) && (indexToAdd == 1)) {
+            this.selectedViewGraph = 0;
+            return;
+        }
+        if ((this.selectedViewGraph == 0) && (indexToAdd == -1)) {
+            this.selectedViewGraph = 2;
+            return;
+        }
+        this.selectedViewGraph += indexToAdd;
     }
 
 

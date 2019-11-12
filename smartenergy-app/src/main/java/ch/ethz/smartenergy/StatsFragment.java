@@ -63,8 +63,6 @@ public class StatsFragment extends Fragment {
         spinner.setSelection(adapter.getPosition("Current Month"));
 
         updateChart();
-
-
     }
 
     void updateChart() {

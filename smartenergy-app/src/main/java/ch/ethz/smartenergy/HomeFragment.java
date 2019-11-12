@@ -41,8 +41,6 @@ public class HomeFragment extends Fragment {
 
     private MainActivity mainActivity;
 
-    private TextView sensorData;
-    private TextView probabilityStandingStil;
     private TextView probabilityOnFoot;
     private TextView probabilityTrain;
     private TextView probabilityTramway;
@@ -51,8 +49,13 @@ public class HomeFragment extends Fragment {
     private TextView probabilityBicycle;
     private TextView probabilityEbike;
     private TextView probabilityMotorcycle;
+    private TextView dataTitle;
     private PieChart chart;
     private Button button;
+
+    private List<PieEntry> pieChartEntries;
+    private List<Integer> colorEntries;
+    private String selectedGraphName = Constants.MENU_OPTIONS[0];
 
 
     @Override
@@ -70,7 +73,7 @@ public class HomeFragment extends Fragment {
         this.mainActivity = (MainActivity) this.getActivity();
         View v = getView();
 
-
+        dataTitle = getView().findViewById(R.id.data_title);
         probabilityOnFoot = v.findViewById(R.id.text_predicted_foot);
         probabilityTrain = v.findViewById(R.id.text_predicted_train);
         probabilityTramway = v.findViewById(R.id.text_predicted_tramway);
@@ -122,10 +125,9 @@ public class HomeFragment extends Fragment {
             appendResult();
         }
 
-        if(!isFilePresent(getActivity(), "data.json")) {
+        if (!isFilePresent(getActivity(), "data.json")) {
             return;
         }
-
         JSONObject json = new JSONObject();
 
         try {
@@ -133,7 +135,6 @@ public class HomeFragment extends Fragment {
         } catch (JSONException err) {
             Log.d("Error", err.toString());
         }
-
 
         TimeZone tz = TimeZone.getDefault();
         SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
@@ -144,30 +145,68 @@ public class HomeFragment extends Fragment {
             e.printStackTrace();
         }
 
-        List<PieEntry> pieChartEntries = new ArrayList<>();
-        final int[] material_colors = {
-                rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
-                rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
-                rgb("#D81B60")
-        };
-        ArrayList<Integer> colors = new ArrayList<>();
+        this.setDataGraph(todayData);
+        if (pieChartEntries.size() == 0) {
+            this.chart.clear();
+            this.chart.invalidate();
+            return;
+        }
 
+        this.setChartUI();
+    }
+
+    private void setDataGraph(JSONObject todayData) {
+
+        pieChartEntries = new ArrayList<>();
+        colorEntries = new ArrayList<>();
+
+        if (selectedGraphName.equals(Constants.MENU_OPTIONS[0])) {
+            this.updateDataTime(todayData);
+        } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[1])) {
+            this.updateCO2PerMode(todayData);
+        } else {
+            //this.updateAverageCO2(todayData);
+            this.updateDataTime(todayData);
+        }
+            }
+
+    private void updateDataTime(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
             try {
                 if (todayData.getJSONObject(activity).getInt("time") != 0) {
                     pieChartEntries.add(new PieEntry(todayData.getJSONObject(activity).getInt("time"), activity));
-                    colors.add(material_colors[i]);
+                    colorEntries.add(Constants.MATERIAL_COLORS[i]);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             i++;
         }
+    }
 
-        if (pieChartEntries.size() == 0) {
-            return;
+    private void updateCO2PerMode(JSONObject todayData) {
+
+        int i = 0;
+        for (String activity : Constants.ListModes) {
+            try {
+                if (todayData.getJSONObject(activity).getInt("distance") != 0) {
+                    int gPerCO2 = todayData.getJSONObject(activity).getInt("distance");
+                    gPerCO2 *= Constants.CO2PerMode[i];
+                    pieChartEntries.add(new PieEntry(gPerCO2, activity));
+                    colorEntries.add(Constants.MATERIAL_COLORS[i]);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            i++;
         }
+    }
+
+    private void updateAverageCO2(JSONObject todayData) {
+    }
+
+    private void setChartUI() {
 
         // Outside values
         Legend l = this.chart.getLegend();
@@ -187,21 +226,22 @@ public class HomeFragment extends Fragment {
         set.setValueLinePart2Length(0.48f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
 
         this.chart.setExtraOffsets(0.f, 6.f, 0.f, 6.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
-        this.chart.setCenterText("Minutes Per Transportation Mode");
         this.chart.setClickable(false);
         this.chart.setHighlightPerTapEnabled(false);
 
-        set.setColors(colors);
+        set.setColors(colorEntries);
 
         PieData data = new PieData(set);
         this.chart.setData(data);
+        this.chart.setHoleRadius(50);
         data.setValueTextSize(11f);
 
         this.chart.setExtraBottomOffset(18f);
         this.chart.getDescription().setEnabled(false);
         this.chart.animateXY(1000, 1000);
         this.chart.invalidate();
-
+        int index = Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName);
+        this.chart.setCenterText(Constants.PIE_GRAPH_DESCRIPTION[index]);
     }
 
     private boolean isFilePresent(Context context, String fileName) {
@@ -231,11 +271,9 @@ public class HomeFragment extends Fragment {
         probabilityBicycle.append(String.format("%s %.2f %s", " vs", predictions[5] * 100, " %"));
         probabilityEbike.append(String.format("%s %.2f %s", " vs", predictions[6] * 100, " %"));
         probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100, " %"));
-
     }
 
     void showResult() {
-
         float[] predictions = this.mainActivity.getPredictions();
         probabilityOnFoot.setText(getString(R.string.on_foot, predictions[0] * 100));
         probabilityTrain.setText(getString(R.string.train, predictions[1] * 100));
@@ -247,7 +285,6 @@ public class HomeFragment extends Fragment {
         probabilityMotorcycle.setText(getString(R.string.motorcycle, predictions[7] * 100));
     }
 
-
     void startScanning() {
         if (this.chart != null && this.chart.getData() == null) {
             this.chart.setNoDataText("Collecting Data, please wait...");
@@ -255,8 +292,12 @@ public class HomeFragment extends Fragment {
             this.chart.invalidate();
         }
         this.button.setText(R.string.start_scanning_on_click);
+    }
 
-
+    void menuClick(int selectedViewGraph) {
+        this.selectedGraphName = Constants.MENU_OPTIONS[selectedViewGraph];
+        this.updateChart();
+        this.dataTitle.setText(this.selectedGraphName);
     }
 }
 
