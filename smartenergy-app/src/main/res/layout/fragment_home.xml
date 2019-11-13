@@ -75,24 +75,25 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottomContainer"
-        android:layout_width="0dp"
-        android:layout_height="298dp"
+        android:layout_width="412dp"
+        android:layout_height="347dp"
         android:background="#ffffff"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout"
+        app:layout_constraintVertical_bias="0.0">
 
         <Button
             android:id="@+id/button_start"
             android:layout_width="280dp"
             android:layout_height="35dp"
-            android:layout_marginTop="42dp"
+            android:layout_marginBottom="134dp"
             android:background="#bdc4b6  "
             android:onClick="startScanning"
             android:text="@string/start_scanning"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.496"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textSwitcher" />
 
