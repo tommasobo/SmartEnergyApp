@@ -21,14 +21,14 @@ public class Constants {
     public static final int[] CO2PerMode = {1, 34, 44, 98, 20, 1, 1, 72, 1};
 
 
-
     // UI
+    public static final String[] listModesVerbose = {"on foot", "in a train", "on a bus", "in a car", "in a tram", "on a bicycle", "on a e-bike", "riding a bike", "not doing much"};
     public static final String TAG_FRAGMENT_HOME = "fragment_home";
     public static final String TAG_FRAGMENT_STATS = "fragment_stats";
     public static final String TAG_FRAGMENT_SETTINGS = "fragment_settings";
     public static final String[] MENU_OPTIONS = {"Time per Mode", "CO₂ per Mode", "Average CO₂"};
-    public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Transportation Mode For Today",
-            "CO₂ Per Transportation Mode For Today", "CO₂ Emitted Compared to Average For Today"};
+    public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Mode For Today",
+            "CO₂ Per Mode For Today", "CO₂ Emitted Compared to Average For Today"};
     public static final int[] MATERIAL_COLORS = {
             rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
             rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),

@@ -332,6 +332,9 @@ public class MainActivity extends AppCompatActivity {
             this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
         }
 
+        HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
+        homeFragment.updateIcons(this.mostPresentWindow);
+
         if (this.internalCycle == 11) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
@@ -339,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
             updateJSON(key, locationScans);
 
             // Update Home and Stats Fragment
-            HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
+            homeFragment = (HomeFragment) MainActivity.this.homeFragment;
             homeFragment.updateChart();
             StatsFragment statsFragment = (StatsFragment) MainActivity.this.statsFragment;
             statsFragment.updateChart();
@@ -401,6 +404,9 @@ public class MainActivity extends AppCompatActivity {
         // Do nearest neighbor interpolation
         List<Double> magnitudes_interpolated = new ArrayList<>();
         double abs_sum = 0;
+        if (times.isEmpty()) {
+            return;
+        }
         long windowStart = times.get(0);
         for (int i = 0; i < 5000; i += 20) {
             long timeNode = windowStart + i;

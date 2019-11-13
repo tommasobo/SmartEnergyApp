@@ -5,7 +5,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.TimeZone;
 
 
 public class MonthViewFormatter extends ValueFormatter {

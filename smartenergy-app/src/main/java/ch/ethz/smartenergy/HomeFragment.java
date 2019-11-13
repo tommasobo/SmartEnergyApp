@@ -2,21 +2,36 @@ package ch.ethz.smartenergy;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout.LayoutParams;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextSwitcher;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.Fragment;
 
+import com.devs.vectorchildfinder.VectorChildFinder;
+import com.devs.vectorchildfinder.VectorDrawableCompat;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import org.json.JSONException;
@@ -33,8 +48,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 
 public class HomeFragment extends Fragment {
@@ -49,6 +68,12 @@ public class HomeFragment extends Fragment {
     private TextView probabilityBicycle;
     private TextView probabilityEbike;
     private TextView probabilityMotorcycle;
+    private TextView modeBeingUsed;
+
+    private List<CircleImageView> listIcons;
+
+
+    private TextSwitcher textSwitcher;
     private TextView dataTitle;
     private PieChart chart;
     private Button button;
@@ -74,6 +99,10 @@ public class HomeFragment extends Fragment {
         View v = getView();
 
         dataTitle = getView().findViewById(R.id.data_title);
+        textSwitcher = getView().findViewById(R.id.textSwitcher);
+        textSwitcher.setInAnimation(getView().getContext(), android.R.anim.slide_in_left);
+        textSwitcher.setOutAnimation(getView().getContext(), android.R.anim.slide_out_right);
+        textSwitcher.setCurrentText("not collecting any data");
         /*probabilityOnFoot = v.findViewById(R.id.text_predicted_foot);
         probabilityTrain = v.findViewById(R.id.text_predicted_train);
         probabilityTramway = v.findViewById(R.id.text_predicted_tramway);
@@ -92,6 +121,15 @@ public class HomeFragment extends Fragment {
         probabilityBicycle.setText(getString(R.string.bicycle, 0.00));
         probabilityEbike.setText(getString(R.string.ebike, 0.00));
         probabilityMotorcycle.setText(getString(R.string.motorcycle, 0.00));*/
+        this.listIcons = new ArrayList<>();
+        for (int i = 0; i < Constants.ListModes.length; i++) {
+            int resID = getResources().getIdentifier("iconMode" + i, "id", getActivity().getPackageName());
+            CircleImageView img = getView().findViewById(resID);
+            img.setAlpha(0.33f);
+            img.setBorderColor(Constants.MATERIAL_COLORS[i]);
+            this.listIcons.add(img);
+        }
+
         chart = v.findViewById(R.id.chart_graph);
         this.chart.setNoDataText("No Data Available for Today");
         this.updateChart();
@@ -225,23 +263,34 @@ public class HomeFragment extends Fragment {
         set.setValueLinePart1Length(0.45f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
         set.setValueLinePart2Length(0.48f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
 
-        this.chart.setExtraOffsets(0.f, 6.f, 0.f, 6.f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
+        this.chart.setExtraOffsets(20.f, 7.f, 20, 7f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
         this.chart.setClickable(false);
         this.chart.setHighlightPerTapEnabled(false);
-
         set.setColors(colorEntries);
 
+
         PieData data = new PieData(set);
+        data.setDrawValues(true);
+        data.setValueTextColor(Color.BLACK);
+        int colorBlack = Color.parseColor("#000000");
+        chart.setEntryLabelColor(colorBlack);
         this.chart.setData(data);
         this.chart.setHoleRadius(50);
         data.setValueTextSize(11f);
 
-        this.chart.setExtraBottomOffset(18f);
         this.chart.getDescription().setEnabled(false);
         this.chart.animateXY(1000, 1000);
-        this.chart.invalidate();
+        this.chart.getLegend().setEnabled(false);
+        chart.getData().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return ("" + (int)value);
+            }
+        });
         int index = Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName);
         this.chart.setCenterText(Constants.PIE_GRAPH_DESCRIPTION[index]);
+        this.chart.setCenterTextRadiusPercent(90f);
+        this.chart.invalidate();
     }
 
     private boolean isFilePresent(Context context, String fileName) {
@@ -298,6 +347,49 @@ public class HomeFragment extends Fragment {
         this.selectedGraphName = Constants.MENU_OPTIONS[selectedViewGraph];
         this.updateChart();
         this.dataTitle.setText(this.selectedGraphName);
+    }
+
+    private double getPercentage(Integer value, Integer total) {
+        return (value / (double) total) * 100;
+    }
+
+    void updateIcons(Map<String, Integer> mostPresentWindow) {
+
+        for (String activity : Constants.ListModes) {
+            if (!mostPresentWindow.containsKey(activity)) {
+                int index = Arrays.asList(Constants.ListModes).indexOf(activity);
+                ImageView img = listIcons.get(index);
+                img.setAlpha(0.33f);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : mostPresentWindow.entrySet()) {
+            int index = Arrays.asList(Constants.ListModes).indexOf(entry.getKey());
+            ImageView img = listIcons.get(index);
+            if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 33.3f &&
+                    getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) > 15f) {
+                img.setAlpha(0.65f);
+            } else if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 66.6f) {
+                img.setAlpha(0.85f);
+            } else {
+                img.setAlpha(1f);
+            }
+        }
+
+        String mostLikely = Collections.max(mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
+        TextView tv = (TextView) this.textSwitcher.getCurrentView();
+        boolean change = true;
+        int index = Arrays.asList(Constants.ListModes).indexOf(mostLikely);
+        if (tv.getText().toString().length()>0) {
+            if (tv.getText().toString().equals(Constants.listModesVerbose[index])) {
+                change = false;
+            }
+        }
+        if (change) {
+            this.textSwitcher.setText(Constants.listModesVerbose[index]);
+            TextView tv2 = (TextView) this.textSwitcher.getCurrentView();
+            tv2.setGravity(Gravity.CENTER_HORIZONTAL);
+            tv2.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        }
     }
 }
 
