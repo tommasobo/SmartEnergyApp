@@ -192,7 +192,7 @@ public class HomeFragment extends Fragment {
             this.updateCO2PerMode(todayData);
         } else {
             //this.updateAverageCO2(todayData);
-            this.updateDataTime(todayData);
+            updateAverageCO2(todayData);
         }
             }
 
@@ -217,9 +217,9 @@ public class HomeFragment extends Fragment {
         for (String activity : Constants.ListModes) {
             try {
                 if (todayData.getJSONObject(activity).getInt("distance") != 0) {
-                    int gPerCO2 = todayData.getJSONObject(activity).getInt("distance");
+                    double gPerCO2 = todayData.getJSONObject(activity).getDouble("distance");
                     gPerCO2 *= Constants.CO2PerMode[i];
-                    pieChartEntries.add(new PieEntry(gPerCO2, activity));
+                    pieChartEntries.add(new PieEntry((int) gPerCO2, activity));
                     colorEntries.add(Constants.MATERIAL_COLORS[i]);
                 }
             } catch (JSONException e) {
@@ -230,6 +230,18 @@ public class HomeFragment extends Fragment {
     }
 
     private void updateAverageCO2(JSONObject todayData) {
+        int i = 0;
+        for (String activity : Constants.ListModes) {
+            try {
+                if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
+                    pieChartEntries.add(new PieEntry((int)(todayData.getJSONObject(activity).getDouble("distance")), activity));
+                    colorEntries.add(Constants.MATERIAL_COLORS[i]);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            i++;
+        }
     }
 
     private void setChartUI() {

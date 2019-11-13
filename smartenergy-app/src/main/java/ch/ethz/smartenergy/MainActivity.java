@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.res.AssetFileDescriptor;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -42,9 +43,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
@@ -97,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
     public float[] getPredictions() {
         return predictions;
     }
+
+    private double distance;
 
 
     @Override
@@ -188,19 +194,24 @@ public class MainActivity extends AppCompatActivity {
         double lat1 = locationScans.get(0).getLatitude();
         double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
 
-        double R = 6371; //kilometers
-        double dLat = Math.toRadians(lat2-lat1);
-        double dLng = Math.toRadians(lon2-lon1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        double distance = R * c;
+        float[] result = new float[1];
+        Location.distanceBetween(lat1, lon1, lat2, lon2, result);
+
+//        double R = 6371; //kilometers
+//        double dLat = Math.toRadians(lat2-lat1);
+//        double dLng = Math.toRadians(lon2-lon1);
+//        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+//                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+//                        Math.sin(dLng/2) * Math.sin(dLng/2);
+//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+//        double distance = R * c;
+
+        double distance = (double) result[0];
 
         return distance;
     }
 
-    private void updateJSON(String key, ArrayList<LocationScan> locationScans) {
+    private void updateJSON(String key, ArrayList<LocationScan> locationScans, double distance) {
 
         boolean isFilePresent = isFilePresent(this, "data.json");
         if(isFilePresent) {
@@ -247,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                     this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     double d = activity.getJSONObject(key).getDouble("distance");
-                    activity.getJSONObject(key).put("distance", d + calculateDistance(locationScans));
+                    activity.getJSONObject(key).put("distance", d + distance);
                 }
             }catch (JSONException err){
                 Log.d("Error", err.toString());
@@ -266,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
                 if (temp != null) {
                     this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
-                    activity.getJSONObject(key).put("distance", calculateDistance(locationScans));
+                    activity.getJSONObject(key).put("distance", distance);
                 }
 
             } catch (JSONException e) {
@@ -283,6 +294,57 @@ public class MainActivity extends AppCompatActivity {
 
         create(this,"data.json", json.toString());
 
+    }
+
+    private void updateAAAA(ArrayList<LocationScan> locationScans) {
+
+        if (locationScans == null || locationScans.isEmpty()) {
+            return;
+        }
+
+        double lon1 = locationScans.get(0).getLongitude();
+        double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
+        double lat1 = locationScans.get(0).getLatitude();
+        double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
+
+
+        String ret = "";
+
+        try {
+            InputStream inputStream = this.openFileInput("aaaa.txt");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+
+
+
+        try {
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(this.openFileOutput("aaaa.txt", Context.MODE_PRIVATE));
+                outputStreamWriter.write(ret + "\n");
+                outputStreamWriter.write(lat1 + " " + lon1 + " " + lat2 + " " + lon2 + "\n");
+                outputStreamWriter.close();
+            }
+            catch (IOException e) {
+                Log.e("Exception", "File write failed: " + e.toString());
+            }
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -340,11 +402,14 @@ public class MainActivity extends AppCompatActivity {
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
         homeFragment.updateIcons(this.mostPresentWindow);
 
+        distance += calculateDistance(locationScans);
+
         if (this.internalCycle == 11) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
 
-            updateJSON(key, locationScans);
+            updateJSON(key, locationScans, distance);
+            updateAAAA(locationScans);
 
             // Update Home and Stats Fragment
             homeFragment = (HomeFragment) MainActivity.this.homeFragment;
@@ -354,6 +419,8 @@ public class MainActivity extends AppCompatActivity {
 
             this.internalCycle = 0;
             this.mostPresentWindow = new HashMap<>();
+
+            distance = 0;
         }
 
     }
