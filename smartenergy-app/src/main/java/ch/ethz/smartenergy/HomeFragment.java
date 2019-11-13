@@ -2,42 +2,30 @@ package ch.ethz.smartenergy;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.ColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout.LayoutParams;
 import android.widget.Button;
+import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
-import android.widget.ViewSwitcher;
 
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.fragment.app.Fragment;
 
-import com.devs.vectorchildfinder.VectorChildFinder;
-import com.devs.vectorchildfinder.VectorDrawableCompat;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.utils.ColorTemplate;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.awt.font.NumericShaper;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
