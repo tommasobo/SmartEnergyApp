@@ -12,8 +12,10 @@ import android.content.IntentSender;
 import android.content.res.AssetFileDescriptor;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -92,10 +94,10 @@ public class MainActivity extends AppCompatActivity {
     public float[] getPredictionsNN() {
         return predictionsNN;
     }
-
     public float[] getPredictions() {
         return predictions;
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
         this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_HOME).hide(settingsFragment).commit();
         this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
         this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container,homeFragment, Constants.TAG_FRAGMENT_SETTINGS).commit();
+
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
@@ -159,6 +162,8 @@ public class MainActivity extends AppCompatActivity {
 
                 return true;
             };
+
+
 
     @Override
     protected void onStart() {
@@ -767,6 +772,9 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(path);
         return file.exists();
     }
+
+
+
 }
 
 

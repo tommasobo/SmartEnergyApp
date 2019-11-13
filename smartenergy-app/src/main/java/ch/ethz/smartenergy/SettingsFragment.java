@@ -3,6 +3,7 @@ package ch.ethz.smartenergy;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -27,6 +29,12 @@ public class SettingsFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
+
+ //       setContentView(R.layout.fragment_settings);
+        TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
+        tv.setMovementMethod(new ScrollingMovementMethod());
+
+
 
 //        Spinner dietSpinner = getView().findViewById(R.id.spinner_settings_diet);
 //        ArrayAdapter<CharSequence> dietAdapter = ArrayAdapter.createFromResource(getContext(),
