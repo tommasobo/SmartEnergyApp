@@ -281,6 +281,9 @@ public class HomeFragment extends Fragment {
     private void updateDistancePerMode(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
+            /*if (activity.equals("Still")) {
+                continue;
+            }*/
             try {
                 if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
                     pieChartEntries.add(new PieEntry((int)(todayData.getJSONObject(activity).getDouble("distance")), activity));

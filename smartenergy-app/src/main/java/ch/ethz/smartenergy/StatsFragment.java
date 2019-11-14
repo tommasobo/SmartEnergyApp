@@ -1,8 +1,10 @@
 package ch.ethz.smartenergy;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -20,6 +23,7 @@ import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import org.joda.time.DateTime;
@@ -32,10 +36,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -44,6 +48,13 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class StatsFragment extends Fragment {
+
+    private String selectedGraphName = Constants.MENU_OPTIONS[0];
+    private TextView dataTitle;
+    private List<Entry> lineChartEntry;
+    private LineData lineData;
+    private List<Integer> colorEntries;
+    private LineChart chart;
 
     @Nullable
     @Override
@@ -55,6 +66,8 @@ public class StatsFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
+
+        this.dataTitle = getView().findViewById(R.id.titleGraph);
         Spinner spinner = getView().findViewById(R.id.spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
                 R.array.list_options, android.R.layout.simple_spinner_item);
@@ -65,9 +78,34 @@ public class StatsFragment extends Fragment {
         updateChart();
     }
 
+    private List<JSONObject> getJsonMonth(JSONObject json) {
+        List<JSONObject> listJson = new ArrayList<>();
+        Iterator <?> keys = json.keys();
+
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            try {
+                if (json.get(key) instanceof JSONObject) {
+                    JSONObject tempJson = json.getJSONObject(key);
+                    String[] out = key.split("-");
+
+                    Date date = new Date();
+                    DateTime datetime = new DateTime(date);
+                    if(out[1].equals(datetime.toString("MM"))) {
+                        listJson.add(tempJson);
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return listJson;
+    }
+
     void updateChart() {
         View v = getView();
-        LineChart chart = v.findViewById(R.id.chart);
+        this.chart = v.findViewById(R.id.chart);
         chart.setNoDataText("No data available for the selected graph.");
 
         JSONObject json = new JSONObject();
@@ -82,34 +120,90 @@ public class StatsFragment extends Fragment {
             Log.d("Error", err.toString());
         }
 
-        List<JSONObject> listJson = new ArrayList<>();
-        JSONObject finalJson = json;
-        Iterator <?> keys = finalJson.keys();
-
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
-            try {
-                if (finalJson.get(key) instanceof JSONObject) {
-                    JSONObject tempJson = finalJson.getJSONObject(key);
-                    String[] out = key.split("-");
-
-                    Date date = new Date();
-                    DateTime datetime = new DateTime(date);
-                    if(out[1].equals(datetime.toString("MM"))) {
-                        listJson.add(tempJson);
-                    }
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
+        List<JSONObject> listJson = getJsonMonth(json);
 
         chart.clear();
         chart.invalidate();
-        LineData lineData = new LineData();
 
+        this.lineData = new LineData();
+        this.setDataGraph(listJson);
+        if (lineData.getDataSetCount() == 0) {
+            this.chart.clear();
+            this.chart.invalidate();
+            return;
+        }
+
+        this.setChartUI(listJson);
+        chart.invalidate(); // refresh
+    }
+
+    private void setChartUI(List<JSONObject> listJson) {
+        Calendar cal = Calendar.getInstance();
+        String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
+        chart.getDescription().setText("Minutes Per Transportation Mode for " + selectedFilterText);
+        DisplayMetrics ds = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(ds);
+        chart.getDescription().setTextSize(12f);
+        chart.setData(lineData);
+        chart.getLineData().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return ("" + (int)value);
+            }
+        });
+
+        chart.getAxisRight().setEnabled(false);
+        chart.getAxisLeft().setDrawGridLines(true);
+        chart.getAxisLeft().setAxisLineWidth(1.2f);
+        chart.getAxisLeft().setGridLineWidth(0.7f);
+        chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getAxisLabel(float value, AxisBase axis) {
+                return ("" + (int)value);
+            }
+        });
+        chart.getAxisRight().setDrawGridLines(false);
+        chart.getAxisLeft().setAxisMinimum(0);
+
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setValueFormatter(new MonthViewFormatter());
+        boolean forceLabelCount = false;
+        if (lineData.getXMin() != lineData.getXMax()) {
+            chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
+            chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+        }
+        if (getLabelNumberForMonth(listJson.size()) > 3) {
+            forceLabelCount = true;
+        }
+        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
+        chart.getXAxis().setGranularityEnabled(true);
+        chart.getXAxis().setCenterAxisLabels(false);
+        chart.getXAxis().setAxisLineWidth(1.2f);
+        chart.getXAxis().setDrawGridLines(false);
+    }
+
+    private void setDataGraph(List<JSONObject> listJson) {
+        lineChartEntry = new ArrayList<>();
+        colorEntries = new ArrayList<>();
+
+        if (selectedGraphName.equals(Constants.MENU_OPTIONS[0])) {
+            this.updateDataTime(listJson);
+        } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[1])) {
+            this.updateCO2PerMode(listJson);
+        } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
+            this.updateDistancePerMode(listJson);
+        } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[3])){
+            this.updateEnergyPerMode(listJson);
+        }
+    }
+
+    private void updateDataTime(List<JSONObject> listJson) {
         int i = 0;
         for (String activity: Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
+            }
             List<Entry> entries = new ArrayList<>();
             listJson.forEach(e -> {
                 try {
@@ -143,55 +237,205 @@ public class StatsFragment extends Fragment {
             lineData.addDataSet(dataSet);
             i++;
         }
+    }
 
-        Calendar cal = Calendar.getInstance();
-        String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
-        chart.getDescription().setText("Minutes Per Transportation Mode for " + selectedFilterText);
-        DisplayMetrics ds = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(ds);
-        int width = ds.widthPixels;
-        int height = ds.heightPixels;
-        chart.getDescription().setTextSize(12f);
-        chart.setData(lineData);
-        chart.getLineData().setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return ("" + (int)value);
+    private void updateCO2PerMode(List<JSONObject> listJson) {
+        int i = 0;
+        for (String activity: Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
             }
-        });
+            List<Entry> entries = new ArrayList<>();
+            listJson.forEach(e -> {
+                try {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                    if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                        Date date = cal.getTime();
+                        double gCO2 = e.getJSONObject(activity).getDouble("distance");
+                        int value = Arrays.asList(Constants.ListModes).indexOf(activity);
+                        gCO2 = gCO2 * (Constants.CO2PerMode[value] / 1000);
+                        if (activity.equals("Foot") || activity.equals("Car") || activity.equals("Bicycle")) {
+                            gCO2 = addOptions(gCO2, activity);
+                        }
+                        if (gCO2 >= 1.0) {
+                            entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (int)gCO2, activity));
+                        }
+                    }
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
+            });
 
-        chart.getAxisRight().setEnabled(false);
-        chart.getAxisLeft().setDrawGridLines(true);
-        chart.getAxisLeft().setAxisLineWidth(1.2f);
-        chart.getAxisLeft().setGridLineWidth(0.7f);
-        chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getAxisLabel(float value, AxisBase axis) {
-                return ("" + (int)value);
+            if (entries.isEmpty()) {
+                i++;
+                continue;
             }
-        });
-        chart.getAxisRight().setDrawGridLines(false);
-        chart.getAxisLeft().setAxisMinimum(0);
-        //chart.getData().setValueTextColor(Color.BLACK);
-        //chart.getData().setValueTextSize(10);
-        XAxis xAxis = chart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setValueFormatter(new MonthViewFormatter());
-        boolean forceLabelCount = false;
-        if (lineData.getXMin() != lineData.getXMax()) {
-            chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
-            chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+            LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
+            final int[] material_colors = {
+                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
+                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
+                    rgb("#D81B60")
+            };
+            dataSet.setColor(material_colors[i]);
+            dataSet.setCircleRadius(5f);
+            dataSet.setCircleColor(material_colors[i]);
+            dataSet.setLineWidth(2f);
+            dataSet.setValueTextSize(0);
+            lineData.addDataSet(dataSet);
+            i++;
         }
-        if (getLabelNumberForMonth(listJson.size()) > 3) {
-            forceLabelCount = true;
-        }
-        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
-        chart.getXAxis().setGranularityEnabled(true);
-        chart.getXAxis().setCenterAxisLabels(false);
-        chart.getXAxis().setAxisLineWidth(1.2f);
-        chart.getXAxis().setDrawGridLines(false);
+    }
 
-        chart.invalidate(); // refresh
+    private double addOptions(double gPerCO2, String activity) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+
+        if (activity.equals("Foot")) {
+            String dietName = preferences.getString("diet", "Ignore Diet");
+            switch (dietName) {
+                case Constants.IGNORE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierNoDietWalking;
+                    break;
+                case Constants.AVERAGE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierAverageDietWalking;
+                    break;
+                case Constants.MEAT_BASED:
+                    gPerCO2 *= Constants.co2MultiplierMeatDietWalking;
+                    break;
+                case Constants.PLANT_BASESD:
+                    gPerCO2 *= Constants.co2MultiplierVeganDietWalking;
+                    break;
+            }
+            return gPerCO2;
+        }
+
+        if (activity.equals("Bicycle")) {
+            String dietName = preferences.getString("diet", "Ignore Diet");
+            switch (dietName) {
+                case Constants.IGNORE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierNoDietBicycle;
+                    break;
+                case Constants.AVERAGE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierAverageDietBicycle;
+                    break;
+                case Constants.MEAT_BASED:
+                    gPerCO2 *= Constants.co2MultiplierMeatDietBicylce;
+                    break;
+                case Constants.PLANT_BASESD:
+                    gPerCO2 *= Constants.co2MultiplierVeganDietBicycle;
+                    break;
+            }
+            return gPerCO2;
+        }
+
+        if (activity.equals("Car")) {
+            String dietName = preferences.getString("car", "Ignore Diet");
+            switch (dietName) {
+                case Constants.DEFAULT_CAR:
+                    gPerCO2 *= Constants.co2MultiplierDefaultCar;
+                    break;
+                case Constants.SMALL_CAR:
+                    gPerCO2 *= Constants.co2MultiplierSmallCar;
+                    break;
+                case Constants.BIG_CAR:
+                    gPerCO2 *= Constants.co2MultiplierBigCar;
+                    break;
+                case Constants.ELECTRIC_CAR:
+                    gPerCO2 *= Constants.co2MultiplierElectricCar;
+                    break;
+            }
+            return gPerCO2;
+        }
+
+        return 1.0;
+    }
+
+    private void updateDistancePerMode(List<JSONObject> listJson) {
+        int i = 0;
+        for (String activity: Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
+            }
+            List<Entry> entries = new ArrayList<>();
+            listJson.forEach(e -> {
+                try {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                    if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                        Date date = cal.getTime();
+                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (int)e.getJSONObject(activity).getDouble("distance"), activity));
+                    }
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
+            });
+            LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
+            final int[] material_colors = {
+                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
+                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
+                    rgb("#D81B60")
+            };
+            dataSet.setColor(material_colors[i]);
+            dataSet.setCircleRadius(5f);
+            dataSet.setCircleColor(material_colors[i]);
+            dataSet.setLineWidth(2f);
+            dataSet.setValueTextSize(0);
+            lineData.addDataSet(dataSet);
+            i++;
+        }
+    }
+
+    private void updateEnergyPerMode(List<JSONObject> listJson) {
+        int i = 0;
+        for (String activity: Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
+            }
+            List<Entry> entries = new ArrayList<>();
+            listJson.forEach(e -> {
+                try {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                    if (e.getJSONObject(activity).getInt("time") != 0) {
+                        Date date = cal.getTime();
+                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
+                    }
+                } catch (JSONException ex) {
+                    ex.printStackTrace();
+                }
+            });
+            LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
+            final int[] material_colors = {
+                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
+                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
+                    rgb("#D81B60")
+            };
+            dataSet.setColor(material_colors[i]);
+            dataSet.setCircleRadius(5f);
+            dataSet.setCircleColor(material_colors[i]);
+            dataSet.setLineWidth(2f);
+            dataSet.setValueTextSize(0);
+            lineData.addDataSet(dataSet);
+            i++;
+        }
     }
 
     private int getMinXAxisPerMonth(float minValueFloat) {
@@ -268,5 +512,11 @@ public class StatsFragment extends Fragment {
         String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
         File file = new File(path);
         return file.exists();
+    }
+
+    void menuClick(int selectedViewGraph) {
+        this.selectedGraphName = Constants.MENU_OPTIONS[selectedViewGraph];
+        this.updateChart();
+        this.dataTitle.setText(this.selectedGraphName);
     }
 }

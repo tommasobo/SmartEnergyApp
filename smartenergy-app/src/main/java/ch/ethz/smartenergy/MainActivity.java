@@ -765,7 +765,7 @@ public class MainActivity extends AppCompatActivity {
         getNextElement(1);
         StatsFragment sF = (StatsFragment) statsFragment;
         HomeFragment hF = (HomeFragment) homeFragment;
-        //sF.menuClick(this.selectedViewGraph);
+        sF.menuClick(this.selectedViewGraph);
         hF.menuClick(this.selectedViewGraph);
     }
 
@@ -773,7 +773,7 @@ public class MainActivity extends AppCompatActivity {
         getNextElement(-1);
         StatsFragment sF = (StatsFragment) statsFragment;
         HomeFragment hF = (HomeFragment) homeFragment;
-        //sF.menuClick(this.selectedViewGraph);
+        sF.menuClick(this.selectedViewGraph);
         hF.menuClick(this.selectedViewGraph);
     }
 
