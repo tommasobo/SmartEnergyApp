@@ -13,10 +13,8 @@ import android.content.res.AssetFileDescriptor;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,12 +41,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
@@ -56,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -94,13 +89,6 @@ public class MainActivity extends AppCompatActivity {
 
     private float[] predictionsNN;
     private float[] predictions;
-
-    public float[] getPredictionsNN() {
-        return predictionsNN;
-    }
-    public float[] getPredictions() {
-        return predictions;
-    }
 
     private double distance;
 
@@ -790,12 +778,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getNextElement(int indexToAdd) {
-        if ((this.selectedViewGraph == Constants.MENU_OPTIONS.length) && (indexToAdd == 1)) {
+        if ((this.selectedViewGraph == Constants.MENU_OPTIONS.length - 1) && (indexToAdd == 1)) {
             this.selectedViewGraph = 0;
             return;
         }
         if ((this.selectedViewGraph == 0) && (indexToAdd == -1)) {
-            this.selectedViewGraph = Constants.MENU_OPTIONS.length;
+            this.selectedViewGraph = Constants.MENU_OPTIONS.length - 1;
             return;
         }
         this.selectedViewGraph += indexToAdd;
@@ -840,6 +828,19 @@ public class MainActivity extends AppCompatActivity {
         String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
         File file = new File(path);
         return file.exists();
+    }
+
+    public float[] getPredictionsNN() {
+        return predictionsNN;
+    }
+    public float[] getPredictions() {
+        return predictions;
+    }
+    public Fragment getHomeFragment() {
+        return homeFragment;
+    }
+    public Fragment getStatsFragment() {
+        return statsFragment;
     }
 
 

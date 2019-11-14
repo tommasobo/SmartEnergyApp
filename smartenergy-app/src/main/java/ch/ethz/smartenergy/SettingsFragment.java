@@ -7,11 +7,8 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -30,73 +27,8 @@ public class SettingsFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
- //       setContentView(R.layout.fragment_settings);
         TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
         tv.setMovementMethod(new ScrollingMovementMethod());
-
-
-
-//        Spinner dietSpinner = getView().findViewById(R.id.spinner_settings_diet);
-//        ArrayAdapter<CharSequence> dietAdapter = ArrayAdapter.createFromResource(getContext(),
-//                R.array.list_diet, android.R.layout.simple_spinner_item);
-//        dietAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        dietSpinner.setAdapter(dietAdapter);
-//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-//        String diet = preferences.getString("diet", null);
-//        if(diet != null)
-//        {
-//            dietSpinner.setSelection(dietAdapter.getPosition(diet));
-//        }else{
-//            dietSpinner.setSelection(dietAdapter.getPosition("Default"));
-//        }
-//
-//
-//        Spinner carSpinner = getView().findViewById(R.id.spinner_settings_car);
-//        ArrayAdapter<CharSequence> carAdapter = ArrayAdapter.createFromResource(getContext(),
-//                R.array.list_car, android.R.layout.simple_spinner_item);
-//        carAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//        carSpinner.setAdapter(carAdapter);
-//        String car = preferences.getString("car", null);
-//        if(car != null)
-//        {
-//            carSpinner.setSelection(carAdapter.getPosition(car));
-//        }else{
-//            carSpinner.setSelection(carAdapter.getPosition("Default"));
-//        }
-//
-//
-//        dietSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-//                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-//                SharedPreferences.Editor editor = preferences.edit();
-//                editor.putString("diet", dietSpinner.getSelectedItem().toString());
-//                editor.apply();
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parentView) {
-//
-//            }
-//
-//        });
-//
-//        carSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-//                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-//                SharedPreferences.Editor editor = preferences.edit();
-//                editor.putString("car", carSpinner.getSelectedItem().toString());
-//                editor.apply();
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parentView) {
-//
-//            }
-//
-//        });
-
 
         RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
 
@@ -106,27 +38,27 @@ public class SettingsFragment extends Fragment {
         {
             rgDiet.check(dietId);
         }else{
-            rgDiet.check(R.id.radio_diet_default);
+            rgDiet.check(R.id.radio_diet_ignore);
         }
 
-        rgDiet.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
-        {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                // checkedId is the RadioButton selected
-                RadioButton checkedRadioButton = (RadioButton)group.findViewById(checkedId);
+        rgDiet.setOnCheckedChangeListener((group, checkedId) -> {
+            // checkedId is the RadioButton selected
+            RadioButton checkedRadioButton = (RadioButton)group.findViewById(checkedId);
 
-                boolean isChecked = checkedRadioButton.isChecked();
-                // If the radiobutton that has changed in check state is now checked...
-                if (isChecked)
-                {
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-                    SharedPreferences.Editor editor = preferences.edit();
-                    editor.putString("diet", checkedRadioButton.getText().toString());
-                    editor.putInt("dietId", checkedId);
-                    editor.apply();
-                }
+            boolean isChecked = checkedRadioButton.isChecked();
+            // If the radiobutton that has changed in check state is now checked...
+            if (isChecked)
+            {
+                SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(getContext());
+                SharedPreferences.Editor editor = preferences1.edit();
+                editor.putString("diet", checkedRadioButton.getText().toString());
+                editor.putInt("dietId", checkedId);
+                editor.apply();
             }
+            MainActivity main = (MainActivity) getActivity();
+            HomeFragment hF = (HomeFragment) main.getHomeFragment();
+            hF.updateChart(true);
+
         });
 
         RadioGroup rgCar = (RadioGroup) getView().findViewById(R.id.radio_group_car);
@@ -140,24 +72,24 @@ public class SettingsFragment extends Fragment {
             rgCar.check(R.id.radio_car_default);
         }
 
-        rgCar.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
-        {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                // checkedId is the RadioButton selected
-                RadioButton checkedRadioButton = (RadioButton)group.findViewById(checkedId);
+        rgCar.setOnCheckedChangeListener((group, checkedId) -> {
+            // checkedId is the RadioButton selected
+            RadioButton checkedRadioButton = (RadioButton)group.findViewById(checkedId);
 
-                boolean isChecked = checkedRadioButton.isChecked();
-                // If the radiobutton that has changed in check state is now checked...
-                if (isChecked)
-                {
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-                    SharedPreferences.Editor editor = preferences.edit();
-                    editor.putString("car", checkedRadioButton.getText().toString());
-                    editor.putInt("carId", checkedId);
-                    editor.apply();
-                }
+            boolean isChecked = checkedRadioButton.isChecked();
+            // If the radiobutton that has changed in check state is now checked...
+            if (isChecked)
+            {
+                SharedPreferences preferences12 = PreferenceManager.getDefaultSharedPreferences(getContext());
+                SharedPreferences.Editor editor = preferences12.edit();
+                editor.putString("car", checkedRadioButton.getText().toString());
+                editor.putInt("carId", checkedId);
+                editor.apply();
             }
+
+            MainActivity main = (MainActivity) getActivity();
+            HomeFragment hF = (HomeFragment) main.getHomeFragment();
+            hF.updateChart(true);
         });
 
 

@@ -29,14 +29,15 @@
         <item>All Time</item>
     </string-array>
     <string-array name="list_diet">
-        <item>Default</item>
-        <item>Meat based</item>
-        <item>Plant based</item>
+        <item>Ignore Diet</item>
+        <item>Average</item>
+        <item>Meat Based</item>
+        <item>Plant Based</item>
     </string-array>
     <string-array name="list_car">
-        <item>Default</item>
-        <item>Sports car</item>
-        <item>Small car</item>
-        <item>Electric car</item>
+        <item>Default Car</item>
+        <item>Sport Car</item>
+        <item>Small Car</item>
+        <item>Electric Car</item>
     </string-array>
 </resources>

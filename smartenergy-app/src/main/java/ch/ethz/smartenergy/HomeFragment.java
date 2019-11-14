@@ -1,8 +1,10 @@
 package ch.ethz.smartenergy;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -46,19 +48,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class HomeFragment extends Fragment {
 
     private MainActivity mainActivity;
-
-    private TextView probabilityOnFoot;
-    private TextView probabilityTrain;
-    private TextView probabilityTramway;
-    private TextView probabilityBus;
-    private TextView probabilityCar;
-    private TextView probabilityBicycle;
-    private TextView probabilityEbike;
-    private TextView probabilityMotorcycle;
-    private TextView modeBeingUsed;
-
     private List<CircleImageView> listIcons;
-
 
     private TextSwitcher textSwitcher;
     private TextView dataTitle;
@@ -76,7 +66,6 @@ public class HomeFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
 
@@ -90,24 +79,8 @@ public class HomeFragment extends Fragment {
         textSwitcher.setInAnimation(getView().getContext(), android.R.anim.slide_in_left);
         textSwitcher.setOutAnimation(getView().getContext(), android.R.anim.slide_out_right);
         textSwitcher.setCurrentText("not collecting any data");
-        /*probabilityOnFoot = v.findViewById(R.id.text_predicted_foot);
-        probabilityTrain = v.findViewById(R.id.text_predicted_train);
-        probabilityTramway = v.findViewById(R.id.text_predicted_tramway);
-        probabilityBus = v.findViewById(R.id.text_predicted_bus);
-        probabilityCar = v.findViewById(R.id.text_predicted_car);
-        probabilityBicycle = v.findViewById(R.id.text_predicted_bicycle);
-        probabilityEbike = v.findViewById(R.id.text_predicted_ebike);
-        probabilityMotorcycle = v.findViewById(R.id.text_predicted_motorcycle);*/
         button = v.findViewById(R.id.button_start);
 
-        /*probabilityOnFoot.setText(getString(R.string.on_foot, 0.00));
-        probabilityTrain.setText(getString(R.string.train, 0.00));
-        probabilityBus.setText(getString(R.string.bus, 0.00));
-        probabilityCar.setText(getString(R.string.car, 0.00));
-        probabilityTramway.setText(getString(R.string.tramway, 0.00));
-        probabilityBicycle.setText(getString(R.string.bicycle, 0.00));
-        probabilityEbike.setText(getString(R.string.ebike, 0.00));
-        probabilityMotorcycle.setText(getString(R.string.motorcycle, 0.00));*/
         this.listIcons = new ArrayList<>();
         for (int i = 0; i < Constants.ListModes.length; i++) {
             int resID = getResources().getIdentifier("iconMode" + i, "id", getActivity().getPackageName());
@@ -190,10 +163,12 @@ public class HomeFragment extends Fragment {
             this.updateDataTime(todayData);
         } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[1])) {
             this.updateCO2PerMode(todayData);
-        } else {
-            this.updateAverageCO2(todayData);
+        } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
+            this.updateDistancePerMode(todayData);
+        } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[3])){
+            this.updateEnergyPerMode(todayData);
         }
-            }
+    }
 
     private void updateDataTime(JSONObject todayData) {
         int i = 0;
@@ -225,6 +200,9 @@ public class HomeFragment extends Fragment {
                 if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
                     double gPerCO2 = todayData.getJSONObject(activity).getDouble("distance");
                     gPerCO2 = gPerCO2 * (Constants.CO2PerMode[i] / 1000);
+                    if (activity.equals("Foot") || activity.equals("Car") || activity.equals("Bicycle")) {
+                        gPerCO2 = addOptions(gPerCO2, activity);
+                    }
                     if (gPerCO2 >= 1.0) {
                         pieChartEntries.add(new PieEntry((int) gPerCO2, activity));
                         colorEntries.add(Constants.MATERIAL_COLORS[i]);
@@ -237,13 +215,98 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void updateAverageCO2(JSONObject todayData) {
+    private double addOptions(double gPerCO2, String activity) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+
+        if (activity.equals("Foot")) {
+            String dietName = preferences.getString("diet", "Ignore Diet");
+            switch (dietName) {
+                case Constants.IGNORE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierNoDietWalking;
+                    break;
+                case Constants.AVERAGE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierAverageDietWalking;
+                    break;
+                case Constants.MEAT_BASED:
+                    gPerCO2 *= Constants.co2MultiplierMeatDietWalking;
+                    break;
+                case Constants.PLANT_BASESD:
+                    gPerCO2 *= Constants.co2MultiplierVeganDietWalking;
+                    break;
+            }
+            return gPerCO2;
+        }
+
+        if (activity.equals("Bicycle")) {
+            String dietName = preferences.getString("diet", "Ignore Diet");
+            switch (dietName) {
+                case Constants.IGNORE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierNoDietBicycle;
+                    break;
+                case Constants.AVERAGE_DIET:
+                    gPerCO2 *= Constants.co2MultiplierAverageDietBicycle;
+                    break;
+                case Constants.MEAT_BASED:
+                    gPerCO2 *= Constants.co2MultiplierMeatDietBicylce;
+                    break;
+                case Constants.PLANT_BASESD:
+                    gPerCO2 *= Constants.co2MultiplierVeganDietBicycle;
+                    break;
+            }
+            return gPerCO2;
+        }
+
+        if (activity.equals("Car")) {
+            String dietName = preferences.getString("car", "Ignore Diet");
+            switch (dietName) {
+                case Constants.DEFAULT_CAR:
+                    gPerCO2 *= Constants.co2MultiplierDefaultCar;
+                    break;
+                case Constants.SMALL_CAR:
+                    gPerCO2 *= Constants.co2MultiplierSmallCar;
+                    break;
+                case Constants.BIG_CAR:
+                    gPerCO2 *= Constants.co2MultiplierBigCar;
+                    break;
+                case Constants.ELECTRIC_CAR:
+                    gPerCO2 *= Constants.co2MultiplierElectricCar;
+                    break;
+            }
+            return gPerCO2;
+        }
+
+        return 1.0;
+    }
+
+    private void updateDistancePerMode(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
             try {
                 if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
                     pieChartEntries.add(new PieEntry((int)(todayData.getJSONObject(activity).getDouble("distance")), activity));
                     colorEntries.add(Constants.MATERIAL_COLORS[i]);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            i++;
+        }
+    }
+
+    private void updateEnergyPerMode(JSONObject todayData) {
+        int i = 0;
+        for (String activity : Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
+            }
+            try {
+                if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
+                    double energyPerMode = todayData.getJSONObject(activity).getDouble("distance");
+                    energyPerMode = energyPerMode * (Constants.WattPerMode[i]);
+                    if (energyPerMode >= 1.0) {
+                        pieChartEntries.add(new PieEntry((int) energyPerMode, activity));
+                        colorEntries.add(Constants.MATERIAL_COLORS[i]);
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -275,7 +338,6 @@ public class HomeFragment extends Fragment {
         this.chart.setClickable(false);
         this.chart.setHighlightPerTapEnabled(false);
         set.setColors(colorEntries);
-
 
         PieData data = new PieData(set);
         data.setDrawValues(true);
@@ -322,27 +384,10 @@ public class HomeFragment extends Fragment {
 
         float[] predictions = this.mainActivity.getPredictionsNN();
         Log.d("PROBABILITIES: ", Arrays.toString(predictions));
-
-        /*probabilityOnFoot.append(String.format("%s %.2f %s", " vs", predictions[0] * 100, " %"));
-        probabilityTrain.append(String.format("%s %.2f %s", " vs", predictions[1] * 100, " %"));
-        probabilityBus.append(String.format("%s %.2f %s", " vs", predictions[2] * 100, " %"));
-        probabilityCar.append(String.format("%s %.2f %s", " vs", predictions[3] * 100, " %"));
-        probabilityTramway.append(String.format("%s %.2f %s", " vs", predictions[4] * 100, " %"));
-        probabilityBicycle.append(String.format("%s %.2f %s", " vs", predictions[5] * 100, " %"));
-        probabilityEbike.append(String.format("%s %.2f %s", " vs", predictions[6] * 100, " %"));
-        probabilityMotorcycle.append(String.format("%s %.2f %s", " vs", predictions[7] * 100, " %"));*/
     }
 
     void showResult() {
         float[] predictions = this.mainActivity.getPredictions();
-        /*probabilityOnFoot.setText(getString(R.string.on_foot, predictions[0] * 100));
-        probabilityTrain.setText(getString(R.string.train, predictions[1] * 100));
-        probabilityBus.setText(getString(R.string.bus, predictions[2] * 100));
-        probabilityCar.setText(getString(R.string.car, predictions[3] * 100));
-        probabilityTramway.setText(getString(R.string.tramway, predictions[4] * 100));
-        probabilityBicycle.setText(getString(R.string.bicycle, predictions[5] * 100));
-        probabilityEbike.setText(getString(R.string.ebike, predictions[6] * 100));
-        probabilityMotorcycle.setText(getString(R.string.motorcycle, predictions[7] * 100));*/
     }
 
     void startScanning() {
@@ -369,7 +414,6 @@ public class HomeFragment extends Fragment {
         TextView t = getView().findViewById(R.id.accuracyText);
         t.setText(accuracy);
 
-
         for (String activity : Constants.ListModes) {
             if (!mostPresentWindow.containsKey(activity)) {
                 int index = Arrays.asList(Constants.ListModes).indexOf(activity);
@@ -391,7 +435,6 @@ public class HomeFragment extends Fragment {
             } else {
                 img.setAlpha(1f);
                 img.setBorderWidth(9);
-                //img.setBorderColor(Color.GREEN);
             }
 
             if (Collections.max(mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey().equals(entry.getKey())) {
@@ -417,6 +460,3 @@ public class HomeFragment extends Fragment {
         }
     }
 }
-
-
-

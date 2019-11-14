@@ -64,9 +64,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lineSpacingExtra="24sp"
-            android:paddingLeft="70dp"
+            android:paddingStart="50dp"
             android:paddingTop="10dp"
-            android:text="Type of diet"
+            android:text="Type of Diet"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -74,26 +74,32 @@
             android:id="@+id/radio_group_diet"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingLeft="70dp"
+            android:paddingStart="70dp"
             android:paddingBottom="10dp">
 
             <RadioButton
-                android:id="@+id/radio_diet_default"
+                android:id="@+id/radio_diet_ignore"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Default" />
+                android:text="Ignore Diet" />
+
+            <RadioButton
+                android:id="@+id/radio_diet_average"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Average" />
 
             <RadioButton
                 android:id="@+id/radio_diet_plant"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Plant based" />
+                android:text="Plant Based" />
 
             <RadioButton
                 android:id="@+id/radio_diet_meat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Meat based" />
+                android:text="Meat Based" />
 
         </RadioGroup>
 
@@ -106,9 +112,10 @@
             android:id="@+id/title_settings_car"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="70dp"
+            android:lineSpacingExtra="24sp"
+            android:paddingStart="50dp"
             android:paddingTop="10dp"
-            android:text="Type of car"
+            android:text="Type of Car"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -116,32 +123,32 @@
             android:id="@+id/radio_group_car"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingLeft="70dp"
+            android:paddingStart="70dp"
             android:paddingBottom="10dp">
 
             <RadioButton
                 android:id="@+id/radio_car_default"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Default" />
+                android:text="Default Car" />
 
             <RadioButton
                 android:id="@+id/radio_car_small"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Small car" />
+                android:text="Small Car" />
 
             <RadioButton
                 android:id="@+id/radio_car_sport"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Sport car" />
+                android:text="Sport Car" />
 
             <RadioButton
                 android:id="@+id/radio_car_electric"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Electric car" />
+                android:text="Electric Car" />
         </RadioGroup>
 
         <View
@@ -149,63 +156,32 @@
             android:layout_height="2dip"
             android:background="#ddd" />
 
-        <!--        <LinearLayout-->
-        <!--            android:layout_width="match_parent"-->
-        <!--            android:layout_height="match_parent"-->
-        <!--            android:orientation="horizontal">-->
+        <TextView
+            android:id="@+id/title_settings_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="50dp"
+            android:paddingTop="10dp"
+            android:text="More Information"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-        <!--            <TextView-->
-        <!--                android:id="@+id/text_settings_diet"-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="wrap_content"-->
-        <!--                android:text="Type of diet" />-->
-
-        <!--            <Spinner-->
-        <!--                android:id="@+id/spinner_settings_diet"-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="wrap_content" />-->
-
-        <!--        </LinearLayout>-->
-
-        <!--        <LinearLayout-->
-        <!--            android:layout_width="match_parent"-->
-        <!--            android:layout_height="match_parent"-->
-        <!--            android:orientation="horizontal">-->
-
-        <!--            <TextView-->
-        <!--                android:id="@+id/text_settings_car"-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="wrap_content"-->
-        <!--                android:text="Type of car" />-->
-
-        <!--            <Spinner-->
-        <!--                android:id="@+id/spinner_settings_car"-->
-        <!--                android:layout_width="wrap_content"-->
-        <!--                android:layout_height="wrap_content" />-->
-        <!--        </LinearLayout>-->
+        <TextView
+            android:id="@+id/textViewInfo"
+            style="@android:style/TextAppearance.Medium"
+            android:layout_width="match_parent"
+            android:layout_height="389dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="10dp"
+            android:scrollbars="vertical"
+            android:text="This app uses average values for the CO2 equivalent related to the emissions of each transportation mode. \n Emissions of various greenhouse gases contribute to climate change. CO2e (equivalent) signifies the amount of CO2 which would have the equivalent global warming potential. However it is important to note here that the actually emissions can vary from the displayed numbers on this app. \n
+    Emissions from driving highly depend on the fuel consumption per km, which is related to the type of car, occupancy driving habits and traffics. To lower the uncertainty related to this figure the user can select the type of car he uses mainly.\n
+    Emissions related to cycling and walking highly depend on the diet. A Steak diet can result in 50 times higher CO2e emissions per km than a low CO2e intense, vegan diet. By offering a selection of diets we intend to lower the CO2e uncertainty related to walking and cycling.\n
+    The sources used for calculating CO2e emissions can be found under: smartmove.ch \n
+    Feel free to get in touch with us: smart@move.ch" />
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/textViewInfo"
-        style="@android:style/TextAppearance.Medium"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="11dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="10dp"
-        android:scrollbars="vertical"
-        android:text="This app uses average values for the CO2 equivalent related to the emissions of each transportation mode. \n Emissions of various greenhouse gases contribute to climate change. CO2e (equivalent) signifies the amount of CO2 which would have the equivalent global warming potential. However it is important to note here that the actually emissions can vary from the displayed numbers on this app. \n
-Emissions from driving highly depend on the fuel consumption per km, which is related to the type of car, occupancy driving habits and traffics. To lower the uncertainty related to this figure the user can select the type of car he uses mainly.\n
-Emissions related to cycling and walking highly depend on the diet. A Steak diet can result in 50 times higher CO2e emissions per km than a low CO2e intense, vegan diet. By offering a selection of diets we intend to lower the CO2e uncertainty related to walking and cycling.\n
-The sources used for calculating CO2e emissions can be found under: smartmove.ch \n
-Feel free to get in touch with us: smart@move.ch"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-        app:layout_constraintVertical_bias="0.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
