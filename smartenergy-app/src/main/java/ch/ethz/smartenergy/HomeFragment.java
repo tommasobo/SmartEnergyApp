@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout.LayoutParams;
-import android.widget.ImageView;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 
@@ -114,13 +113,14 @@ public class HomeFragment extends Fragment {
             int resID = getResources().getIdentifier("iconMode" + i, "id", getActivity().getPackageName());
             CircleImageView img = getView().findViewById(resID);
             img.setAlpha(0.33f);
+            img.setBorderWidth(3);
             img.setBorderColor(Constants.MATERIAL_COLORS[i]);
             this.listIcons.add(img);
         }
 
         chart = v.findViewById(R.id.chart_graph);
         this.chart.setNoDataText("No Data Available for Today");
-        this.updateChart();
+        this.updateChart(true);
     }
 
     private String read(Context context, String fileName) {
@@ -141,7 +141,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    void updateChart() {
+    void updateChart(boolean needsAnimation) {
 
         // Temporary
         if (this.mainActivity.getPredictions() != null) {
@@ -178,7 +178,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
-        this.setChartUI();
+        this.setChartUI(needsAnimation);
     }
 
     private void setDataGraph(JSONObject todayData) {
@@ -191,14 +191,17 @@ public class HomeFragment extends Fragment {
         } else if (selectedGraphName.equals(Constants.MENU_OPTIONS[1])) {
             this.updateCO2PerMode(todayData);
         } else {
-            //this.updateAverageCO2(todayData);
-            updateAverageCO2(todayData);
+            this.updateAverageCO2(todayData);
         }
             }
 
     private void updateDataTime(JSONObject todayData) {
         int i = 0;
+
         for (String activity : Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
+            }
             try {
                 if (todayData.getJSONObject(activity).getInt("time") != 0) {
                     pieChartEntries.add(new PieEntry(todayData.getJSONObject(activity).getInt("time"), activity));
@@ -215,12 +218,17 @@ public class HomeFragment extends Fragment {
 
         int i = 0;
         for (String activity : Constants.ListModes) {
+            if (activity.equals("Still")) {
+                continue;
+            }
             try {
-                if (todayData.getJSONObject(activity).getInt("distance") != 0) {
+                if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
                     double gPerCO2 = todayData.getJSONObject(activity).getDouble("distance");
-                    gPerCO2 *= Constants.CO2PerMode[i];
-                    pieChartEntries.add(new PieEntry((int) gPerCO2, activity));
-                    colorEntries.add(Constants.MATERIAL_COLORS[i]);
+                    gPerCO2 = gPerCO2 * (Constants.CO2PerMode[i] / 1000);
+                    if (gPerCO2 >= 1.0) {
+                        pieChartEntries.add(new PieEntry((int) gPerCO2, activity));
+                        colorEntries.add(Constants.MATERIAL_COLORS[i]);
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -244,7 +252,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private void setChartUI() {
+    private void setChartUI(boolean needsAnimation) {
 
         // Outside values
         Legend l = this.chart.getLegend();
@@ -274,12 +282,12 @@ public class HomeFragment extends Fragment {
         data.setValueTextColor(Color.BLACK);
         int colorBlack = Color.parseColor("#000000");
         chart.setEntryLabelColor(colorBlack);
+        chart.setDrawEntryLabels(false);
         this.chart.setData(data);
         this.chart.setHoleRadius(50);
         data.setValueTextSize(11f);
 
         this.chart.getDescription().setEnabled(false);
-        this.chart.animateXY(1000, 1000);
         this.chart.getLegend().setEnabled(false);
         chart.getData().setValueFormatter(new ValueFormatter() {
             @Override
@@ -290,7 +298,10 @@ public class HomeFragment extends Fragment {
         int index = Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName);
         this.chart.setCenterText(Constants.PIE_GRAPH_DESCRIPTION[index]);
         this.chart.setCenterTextRadiusPercent(90f);
-        this.chart.invalidate();
+        if (needsAnimation) {
+            this.chart.animateXY(800, 800);
+            this.chart.invalidate();
+        }
     }
 
     private boolean isFilePresent(Context context, String fileName) {
@@ -345,7 +356,7 @@ public class HomeFragment extends Fragment {
 
     void menuClick(int selectedViewGraph) {
         this.selectedGraphName = Constants.MENU_OPTIONS[selectedViewGraph];
-        this.updateChart();
+        this.updateChart(true);
         this.dataTitle.setText(this.selectedGraphName);
     }
 
@@ -353,25 +364,39 @@ public class HomeFragment extends Fragment {
         return (value / (double) total) * 100;
     }
 
-    void updateIcons(Map<String, Integer> mostPresentWindow) {
+    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy) {
+
+        TextView t = getView().findViewById(R.id.accuracyText);
+        t.setText(accuracy);
+
 
         for (String activity : Constants.ListModes) {
             if (!mostPresentWindow.containsKey(activity)) {
                 int index = Arrays.asList(Constants.ListModes).indexOf(activity);
-                ImageView img = listIcons.get(index);
+                CircleImageView img = listIcons.get(index);
                 img.setAlpha(0.33f);
+                img.setBorderWidth(3);
             }
         }
         for (Map.Entry<String, Integer> entry : mostPresentWindow.entrySet()) {
             int index = Arrays.asList(Constants.ListModes).indexOf(entry.getKey());
-            ImageView img = listIcons.get(index);
+            CircleImageView img = listIcons.get(index);
             if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 33.3f &&
                     getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) > 15f) {
                 img.setAlpha(0.65f);
+                img.setBorderWidth(5);
             } else if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 66.6f) {
                 img.setAlpha(0.85f);
+                img.setBorderWidth(7);
             } else {
                 img.setAlpha(1f);
+                img.setBorderWidth(9);
+                //img.setBorderColor(Color.GREEN);
+            }
+
+            if (Collections.max(mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey().equals(entry.getKey())) {
+                img.setAlpha(1f);
+                img.setBorderWidth(9);
             }
         }
 

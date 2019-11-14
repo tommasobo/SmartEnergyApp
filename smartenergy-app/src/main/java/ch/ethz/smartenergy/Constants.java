@@ -15,10 +15,11 @@ public class Constants {
     public static final String MagnReadingExtraName = "MagneticFieldReading";
 
     // Logic
-    public static final double MaxSpeedStill = 5;
+    public static final double MaxSpeedStill = 2.5;
     public static final double MaxAccStill = 0.6;
+    public static double MaxAvgSpeedStill = 6;
     public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
-    public static final int[] CO2PerMode = {1, 34, 44, 98, 20, 1, 1, 72, 1};
+    public static final double[] CO2PerMode = {1.0, 34.0, 44.0, 98.0, 20.0, 1.0, 1.0, 72.0, 1.0};
 
 
     // UI
@@ -26,7 +27,7 @@ public class Constants {
     public static final String TAG_FRAGMENT_HOME = "fragment_home";
     public static final String TAG_FRAGMENT_STATS = "fragment_stats";
     public static final String TAG_FRAGMENT_SETTINGS = "fragment_settings";
-    public static final String[] MENU_OPTIONS = {"Time per Mode", "CO₂ per Mode", "Average CO₂"};
+    public static final String[] MENU_OPTIONS = {"Time per Mode", "CO₂ per Mode", "Distance per Mode"};
     public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Mode For Today",
             "CO₂ Per Mode For Today", "CO₂ Emitted Compared to Average For Today"};
     public static final int[] MATERIAL_COLORS = {
@@ -34,6 +35,7 @@ public class Constants {
             rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
             rgb("#D81B60")
     };
+
 
 
     private static int rgb(String hex) {

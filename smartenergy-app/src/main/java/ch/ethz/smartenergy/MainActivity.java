@@ -104,6 +104,9 @@ public class MainActivity extends AppCompatActivity {
 
     private double distance;
 
+    private String accuracy = "";
+    private boolean isNotStill = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -189,6 +192,15 @@ public class MainActivity extends AppCompatActivity {
             return 0.0;
         }
 
+        this.accuracy = "";
+        locationScans.forEach(e->this.accuracy = this.accuracy + (int)e.getAccuracy() + " ");
+
+        locationScans.removeIf(location -> location.getAccuracy() >= 30);
+
+        if (locationScans.isEmpty()) {
+            return 0.0;
+        }
+
         double lon1 = locationScans.get(0).getLongitude();
         double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
         double lat1 = locationScans.get(0).getLatitude();
@@ -197,18 +209,7 @@ public class MainActivity extends AppCompatActivity {
         float[] result = new float[1];
         Location.distanceBetween(lat1, lon1, lat2, lon2, result);
 
-//        double R = 6371; //kilometers
-//        double dLat = Math.toRadians(lat2-lat1);
-//        double dLng = Math.toRadians(lon2-lon1);
-//        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-//                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-//                        Math.sin(dLng/2) * Math.sin(dLng/2);
-//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-//        double distance = R * c;
-
-        double distance = (double) result[0];
-
-        return distance;
+        return (double) result[0];
     }
 
     private void updateJSON(String key, ArrayList<LocationScan> locationScans, double distance) {
@@ -399,21 +400,25 @@ public class MainActivity extends AppCompatActivity {
             this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
         }
 
-        HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow);
-
         distance += calculateDistance(locationScans);
+        HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy);
 
         if (this.internalCycle == 11) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
+            if (key.equals("Still")) {
+                isNotStill = false;
+            } else {
+                isNotStill = true;
+            }
 
             updateJSON(key, locationScans, distance);
-            updateAAAA(locationScans);
+            //updateAAAA(locationScans);
 
             // Update Home and Stats Fragment
             homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-            homeFragment.updateChart();
+            homeFragment.updateChart(isNotStill);
             StatsFragment statsFragment = (StatsFragment) MainActivity.this.statsFragment;
             statsFragment.updateChart();
 
@@ -550,12 +555,9 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
         // Calculate if standing still
-        double speedInKm = convertToKmPerHour(avgSpeed);
+        double avgSpeedInKm = convertToKmPerHour(avgSpeed);
 
-        if (speedInKm <= Constants.MaxSpeedStill &&  meanMagnitude <= Constants.MaxAccStill) {
-            return true;
-        }
-        return false;
+        return avgSpeedInKm <= Constants.MaxAvgSpeedStill && maxSpeed <= Constants.MaxSpeedStill;
     }
 
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
