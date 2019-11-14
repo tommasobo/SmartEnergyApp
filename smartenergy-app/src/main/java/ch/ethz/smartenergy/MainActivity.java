@@ -790,12 +790,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getNextElement(int indexToAdd) {
-        if ((this.selectedViewGraph == 2) && (indexToAdd == 1)) {
+        if ((this.selectedViewGraph == Constants.MENU_OPTIONS.length) && (indexToAdd == 1)) {
             this.selectedViewGraph = 0;
             return;
         }
         if ((this.selectedViewGraph == 0) && (indexToAdd == -1)) {
-            this.selectedViewGraph = 2;
+            this.selectedViewGraph = Constants.MENU_OPTIONS.length;
             return;
         }
         this.selectedViewGraph += indexToAdd;
