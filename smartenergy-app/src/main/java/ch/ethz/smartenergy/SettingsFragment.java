@@ -58,7 +58,7 @@ public class SettingsFragment extends Fragment {
             MainActivity main = (MainActivity) getActivity();
             HomeFragment hF = (HomeFragment) main.getHomeFragment();
             hF.updateChart(true);
-            StatsFragment sF = (StatsFragment) main.getHomeFragment();
+            StatsFragment sF = (StatsFragment) main.getStatsFragment();
             sF.updateChart();
 
         });
@@ -92,7 +92,7 @@ public class SettingsFragment extends Fragment {
             MainActivity main = (MainActivity) getActivity();
             HomeFragment hF = (HomeFragment) main.getHomeFragment();
             hF.updateChart(true);
-            StatsFragment sF = (StatsFragment) main.getHomeFragment();
+            StatsFragment sF = (StatsFragment) main.getStatsFragment();
             sF.updateChart();
         });
 
