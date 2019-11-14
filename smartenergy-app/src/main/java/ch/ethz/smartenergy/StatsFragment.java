@@ -139,7 +139,7 @@ public class StatsFragment extends Fragment {
 
     private void setChartUI(List<JSONObject> listJson) {
         Calendar cal = Calendar.getInstance();
-        String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
+        String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH);
         chart.getDescription().setText(Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + selectedFilterText);
         DisplayMetrics ds = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(ds);
