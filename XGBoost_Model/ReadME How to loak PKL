@@ -1,0 +1,4 @@
+features_df.to_pickle("./feature_df.pkl") #saves the features in python
+
+
+features_df = pd.read_pickle("./feature.pkl") #command to load
