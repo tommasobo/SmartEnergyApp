@@ -103,7 +103,7 @@ public class OnboardingFragment extends Fragment {
         }
 
         if(dots.length > 0){
-            dots[position].setTextColor(getContext().getColor(R.color.colorBlack));
+            dots[position].setTextColor(getContext().getColor(R.color.colorWhite));
         }
 
     }

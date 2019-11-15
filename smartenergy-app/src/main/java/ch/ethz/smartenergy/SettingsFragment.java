@@ -49,8 +49,7 @@ public class SettingsFragment extends Fragment {
             // If the radiobutton that has changed in check state is now checked...
             if (isChecked)
             {
-                SharedPreferences preferences1 = PreferenceManager.getDefaultSharedPreferences(getContext());
-                SharedPreferences.Editor editor = preferences1.edit();
+                SharedPreferences.Editor editor = preferences.edit();
                 editor.putString("diet", checkedRadioButton.getText().toString());
                 editor.putInt("dietId", checkedId);
                 editor.apply();
@@ -82,8 +81,7 @@ public class SettingsFragment extends Fragment {
             // If the radiobutton that has changed in check state is now checked...
             if (isChecked)
             {
-                SharedPreferences preferences12 = PreferenceManager.getDefaultSharedPreferences(getContext());
-                SharedPreferences.Editor editor = preferences12.edit();
+                SharedPreferences.Editor editor = preferences.edit();
                 editor.putString("car", checkedRadioButton.getText().toString());
                 editor.putInt("carId", checkedId);
                 editor.apply();
