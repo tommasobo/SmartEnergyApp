@@ -169,18 +169,23 @@
         <TextView
             android:id="@+id/textViewInfo"
             style="@android:style/TextAppearance.Medium"
-            android:layout_width="match_parent"
-            android:layout_height="389dp"
+            android:layout_width="wrap_content"
+            android:layout_height="258dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="18dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="10dp"
             android:scrollbars="vertical"
-            android:text="This app uses average values for the CO2 equivalent related to the emissions of each transportation mode. \n Emissions of various greenhouse gases contribute to climate change. CO2e (equivalent) signifies the amount of CO2 which would have the equivalent global warming potential. However it is important to note here that the actually emissions can vary from the displayed numbers on this app. \n
-    Emissions from driving highly depend on the fuel consumption per km, which is related to the type of car, occupancy driving habits and traffics. To lower the uncertainty related to this figure the user can select the type of car he uses mainly.\n
-    Emissions related to cycling and walking highly depend on the diet. A Steak diet can result in 50 times higher CO2e emissions per km than a low CO2e intense, vegan diet. By offering a selection of diets we intend to lower the CO2e uncertainty related to walking and cycling.\n
-    The sources used for calculating CO2e emissions can be found under: smartmove.ch \n
-    Feel free to get in touch with us: smart@move.ch" />
+            android:text="Welcome to our Smart Transportation App. Please go to the settings to change your preferences.
+
+Our App gives you an overview of your daily carbon and energy footprint alongside other informations such as distance and time for every transportation mode.
+You don't need to start and stop a trip, just start collecting the data when you feel like it. We will automatically take care of it.
+Please note that we only register and save meaningful trips, that means that walking inside the house with many stops in between will most likely not be registered while walking for more time without interruption will.
+
+On the Home page you can see an overview for today trips and what we currently think you are doing (Beta version) at any given moment with a small delay of 10-20 seconds.
+Please note that if for few seconds you see a transportation being used that does not mean that it will be registered as a trip because we only do that when we are sure a trip is actually happening.
+
+The icons on the home page light up based on how likely they are being used based on our predictions." />
 
     </LinearLayout>
 

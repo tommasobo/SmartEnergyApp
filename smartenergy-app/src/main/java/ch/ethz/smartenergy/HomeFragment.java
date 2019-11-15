@@ -285,7 +285,7 @@ public class HomeFragment extends Fragment {
                 continue;
             }*/
             try {
-                if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
+                if (todayData.getJSONObject(activity).getDouble("distance") >= 1.0) {
                     pieChartEntries.add(new PieEntry((int)(todayData.getJSONObject(activity).getDouble("distance")), activity));
                     colorEntries.add(Constants.MATERIAL_COLORS[i]);
                 }

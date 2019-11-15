@@ -92,7 +92,9 @@ public class MainActivity extends AppCompatActivity {
     private String accuracy = "";
     private int latestWiFiNumber = 0;
     private int oldWiFiNumber = -1;
+    private Location latestKnownLocation = null;
     private int avgSpeed;
+    private int lastGPSUpdate = 0;
 
 
     @Override
@@ -176,25 +178,42 @@ public class MainActivity extends AppCompatActivity {
     private double calculateDistance(ArrayList<LocationScan> locationScans) {
 
         if (locationScans == null || locationScans.isEmpty()) {
+            this.lastGPSUpdate++;
             return 0.0;
         }
 
         this.accuracy = "";
         locationScans.forEach(e->this.accuracy = this.accuracy + (int)e.getAccuracy() + " ");
 
-        locationScans.removeIf(location -> location.getAccuracy() >= 35);
+        if (this.lastGPSUpdate >= 23) {
+            locationScans.removeIf(location -> location.getAccuracy() >= 2000);
+        } else {
+            locationScans.removeIf(location -> location.getAccuracy() >= 45);
+        }
 
         if (locationScans.isEmpty()) {
+            this.lastGPSUpdate++;
             return 0.0;
         }
 
+        this.lastGPSUpdate = 0;
         double lon1 = locationScans.get(0).getLongitude();
         double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
         double lat1 = locationScans.get(0).getLatitude();
         double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
 
+        if (this.latestKnownLocation == null) {
+            this.latestKnownLocation = new Location("");
+            this.latestKnownLocation.setLongitude(lon1);
+            this.latestKnownLocation.setLatitude(lat1);
+        }
+
         float[] result = new float[1];
-        Location.distanceBetween(lat1, lon1, lat2, lon2, result);
+        Location.distanceBetween(this.latestKnownLocation.getLatitude(), this.latestKnownLocation.getLongitude(), lat2, lon2, result);
+
+        this.latestKnownLocation = new Location("");
+        this.latestKnownLocation.setLongitude(locationScans.get(locationScans.size() - 1).getLongitude());
+        this.latestKnownLocation.setLatitude(locationScans.get(locationScans.size() - 1).getLatitude());
 
         return (double) result[0];
     }
@@ -305,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
                     if (MainActivity.this.oldWiFiNumber != -1) {
                         MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                     }
-                    if (scan.getWifiScans().size() == 1) {
+                    if (scan.getWifiScans().size() >= 1) {
                         MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
                     }
                     if (MainActivity.this.oldWiFiNumber == -1) {
@@ -630,9 +649,6 @@ public class MainActivity extends AppCompatActivity {
             points += 0.20f;
         }
 
-        if (points < 0.8) {
-            System.out.println("COAP");
-        }
         return points >= 0.79f;
     }
 
