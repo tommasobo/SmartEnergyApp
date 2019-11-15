@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 
@@ -140,6 +141,17 @@ public class MainActivity extends AppCompatActivity {
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_SETTINGS).hide(settingsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container,homeFragment, Constants.TAG_FRAGMENT_HOME).hide(homeFragment).commit();
+//
+//            LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+//            final View view = inflater.inflate(R.layout.fragment_onboarding, getHomeFragment(), false);
+//            Button remove=(Button) view.findViewById(R.id.remove_cart_items);
+
+//            OnboardingFragment oF = (OnboardingFragment) getOnboardingFragment();
+//            Button nextButton= (Button) oF.getNextButton();
+//            System.out.println("SIX CONSOOOOLES");
+//            System.out.println(nextButton.getText());
+
+
         }else {
             currentFragment = homeFragment;
 
@@ -149,6 +161,13 @@ public class MainActivity extends AppCompatActivity {
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, homeFragment, Constants.TAG_FRAGMENT_HOME).commit();
         }
 
+    }
+
+    public void changeViewToHome() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().hide(currentFragment).
+                show(homeFragment).commit();
+        currentFragment = homeFragment;
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
@@ -955,9 +974,11 @@ public class MainActivity extends AppCompatActivity {
     public float[] getPredictions() {
         return predictions;
     }
+
     public Fragment getHomeFragment() {
         return homeFragment;
     }
+
     public Fragment getStatsFragment() {
         return statsFragment;
     }
