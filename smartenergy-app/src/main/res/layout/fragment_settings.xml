@@ -59,16 +59,30 @@
         android:orientation="vertical"
         app:layout_constraintTop_toBottomOf="@+id/todayBar">
 
-        <TextView
-            android:id="@+id/title_settings_diet"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:lineSpacingExtra="24sp"
-            android:paddingStart="50dp"
-            android:paddingTop="10dp"
-            android:text="Type of Diet"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/title_settings_diet"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="24sp"
+                android:paddingStart="50dp"
+                android:paddingTop="10dp"
+                android:text="Type of Diet"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/button_info_diet"
+                android:layout_width="21dp"
+                android:layout_height="21dp"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/roundedbutton"
+                android:text="\?" />
+        </LinearLayout>
 
         <RadioGroup
             android:id="@+id/radio_group_diet"
@@ -108,16 +122,30 @@
             android:layout_height="2dip"
             android:background="#ddd" />
 
-        <TextView
-            android:id="@+id/title_settings_car"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:lineSpacingExtra="24sp"
-            android:paddingStart="50dp"
-            android:paddingTop="10dp"
-            android:text="Type of Car"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/title_settings_car"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="24sp"
+                android:paddingStart="50dp"
+                android:paddingTop="10dp"
+                android:text="Type of Car"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/button_info_car"
+                android:layout_width="21dp"
+                android:layout_height="21dp"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/roundedbutton"
+                android:text="\?" />
+        </LinearLayout>
 
         <RadioGroup
             android:id="@+id/radio_group_car"

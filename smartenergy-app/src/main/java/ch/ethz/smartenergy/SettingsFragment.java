@@ -7,11 +7,13 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.TooltipCompat;
 import androidx.fragment.app.Fragment;
 
 public class SettingsFragment extends Fragment {
@@ -29,6 +31,10 @@ public class SettingsFragment extends Fragment {
 
         TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
         tv.setMovementMethod(new ScrollingMovementMethod());
+
+        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_diet), "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt");
+
+        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_car), "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt");
 
         RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
 
