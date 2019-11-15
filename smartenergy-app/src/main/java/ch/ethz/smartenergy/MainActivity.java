@@ -75,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Predictor predictor;
     private Interpreter tflite_model;
-
     private List<Double> train_mean;
     private List<Double> train_std;
 
@@ -89,11 +88,11 @@ public class MainActivity extends AppCompatActivity {
 
     private float[] predictionsNN;
     private float[] predictions;
-
     private double distance;
-
     private String accuracy = "";
-    private boolean isNotStill = false;
+    private int latestWiFiNumber = 0;
+    private int oldWiFiNumber = -1;
+    private int avgSpeed;
 
 
     @Override
@@ -113,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // load pretrained predictor
-            InputStream model = getResources().openRawResource(R.raw.xgboost);
+            InputStream model = getResources().openRawResource(R.raw.xgboost2);
             predictor = new Predictor(model);
 
             // load pretrained nn predictor
@@ -183,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         this.accuracy = "";
         locationScans.forEach(e->this.accuracy = this.accuracy + (int)e.getAccuracy() + " ");
 
-        locationScans.removeIf(location -> location.getAccuracy() >= 30);
+        locationScans.removeIf(location -> location.getAccuracy() >= 35);
 
         if (locationScans.isEmpty()) {
             return 0.0;
@@ -285,57 +284,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void updateAAAA(ArrayList<LocationScan> locationScans) {
-
-        if (locationScans == null || locationScans.isEmpty()) {
-            return;
-        }
-
-        double lon1 = locationScans.get(0).getLongitude();
-        double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
-        double lat1 = locationScans.get(0).getLatitude();
-        double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
-
-
-        String ret = "";
-
-        try {
-            InputStream inputStream = this.openFileInput("aaaa.txt");
-
-            if ( inputStream != null ) {
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                String receiveString = "";
-                StringBuilder stringBuilder = new StringBuilder();
-
-                while ( (receiveString = bufferedReader.readLine()) != null ) {
-                    stringBuilder.append(receiveString);
-                }
-
-                inputStream.close();
-                ret = stringBuilder.toString();
-            }
-        }
-        catch (FileNotFoundException e) {
-            Log.e("login activity", "File not found: " + e.toString());
-        } catch (IOException e) {
-            Log.e("login activity", "Can not read file: " + e.toString());
-        }
-
-
-
-
-        try {
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(this.openFileOutput("aaaa.txt", Context.MODE_PRIVATE));
-                outputStreamWriter.write(ret + "\n");
-                outputStreamWriter.write(lat1 + " " + lon1 + " " + lat2 + " " + lon2 + "\n");
-                outputStreamWriter.close();
-            }
-            catch (IOException e) {
-                Log.e("Exception", "File write failed: " + e.toString());
-            }
-    }
-
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -346,25 +294,41 @@ public class MainActivity extends AppCompatActivity {
                 ScanResult scan = (ScanResult) data.getSerializable(Constants.WindowBroadcastExtraName);
                 if (scan != null) {
                     double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings());
+                    double minAcc = calculateMinAcc(scan.getAccReadings());
+                    double maxAcc = calculateMaxAcc(scan.getAccReadings());
                     double maxSpeed = calculateMaxSpead(scan.getLocationScans());
                     double avgSpeed = calculateAvgSpeed(scan.getLocationScans());
-
+                    double minSpeed = calculateMinSpead(scan.getLocationScans());
+                    double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
+                    double gyroMin = calculateMinGyro(scan.getGyroReadings());
+                    double gyroMax = calculateMaxGyro(scan.getGyroReadings());
+                    if (MainActivity.this.oldWiFiNumber != -1) {
+                        MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                    }
+                    if (scan.getWifiScans().size() == 1) {
+                        MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
+                    }
+                    if (MainActivity.this.oldWiFiNumber == -1) {
+                        MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                    }
                     System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
 
                     boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
                             avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()), getLatitude(scan.getLocationScans()),
                             getLongitude(scan.getLocationScans()));
-                    float[] predictionsXGBoost = predict(meanMagnitude, maxSpeed);
 
-                    predict_NN(scan.getAccReadings());
+
+                    float[] predictionsXGBoost = predict(meanMagnitude, maxAcc, minAcc,
+                            gyroAvg, gyroMin, gyroMax,
+                            maxSpeed, avgSpeed, minSpeed);
+
+                    //predict_NN(scan.getAccReadings());
 
                     updateData(isStill, predictionsXGBoost, scan.getLocationScans());
 
                     HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-                    if (homeFragment != null) {
-                        homeFragment.showResult();
-                        homeFragment.appendResult();
-                    }
+                    homeFragment.showResult();
+                    homeFragment.appendResult();
 
                     MainActivity.this.internalCycle++;
                 }
@@ -373,6 +337,97 @@ public class MainActivity extends AppCompatActivity {
         }
 
     };
+
+    private double calculateMinGyro(ArrayList<SensorReading> gyroReadings) {
+        if (gyroReadings.size() == 0) return 0;
+        List<Double> listMagnitudes = new ArrayList<>();
+
+        for (SensorReading reading : gyroReadings) {
+            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
+                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
+                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
+
+            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
+            listMagnitudes.add(Math.sqrt(sumOfPows));
+        }
+
+        return listMagnitudes.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+    }
+
+    private double calculateMaxGyro(ArrayList<SensorReading> gyroReadings) {
+        if (gyroReadings.size() == 0) return 0;
+        List<Double> listMagnitudes = new ArrayList<>();
+
+        for (SensorReading reading : gyroReadings) {
+            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
+                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
+                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
+
+            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
+            listMagnitudes.add(Math.sqrt(sumOfPows));
+        }
+
+        return listMagnitudes.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+    }
+
+    private double calculateAvgGyro(ArrayList<SensorReading> gyroReadings) {
+        if (gyroReadings.size() == 0) return 0;
+
+        double sumOfMagnitudes = 0;
+
+        for (SensorReading reading : gyroReadings) {
+            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
+                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
+                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
+
+            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
+            sumOfMagnitudes += Math.sqrt(sumOfPows);
+        }
+
+        return sumOfMagnitudes / gyroReadings.size();
+    }
+
+    private double calculateMinAcc(ArrayList<SensorReading> accReadings) {
+        if (accReadings.size() == 0) return 0;
+        List<Double> listMagnitudes = new ArrayList<>();
+
+        for (SensorReading reading : accReadings) {
+            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
+                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
+                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
+
+            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
+            listMagnitudes.add(Math.sqrt(sumOfPows));
+        }
+
+        return listMagnitudes.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+    }
+
+    private double calculateMaxAcc(ArrayList<SensorReading> accReadings) {
+        if (accReadings.size() == 0) return 0;
+        List<Double> listMagnitudes = new ArrayList<>();
+
+        for (SensorReading reading : accReadings) {
+            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
+                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
+                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
+
+            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
+            listMagnitudes.add(Math.sqrt(sumOfPows));
+        }
+
+        return listMagnitudes.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+    }
+
+    private double calculateMinSpead(ArrayList<LocationScan> locationScans) {
+        double minSpeed = 0;
+        for (LocationScan locationScan : locationScans) {
+            if (locationScan.getSpeed() < minSpeed) {
+                minSpeed = locationScan.getSpeed();
+            }
+        }
+        return minSpeed;
+    }
 
     private void updateData(boolean isStill, float[] predictionsXGBoost, ArrayList<LocationScan> locationScans) {
         List<Float> listPredictions = new ArrayList<Float>();
@@ -390,19 +445,15 @@ public class MainActivity extends AppCompatActivity {
 
         distance += calculateDistance(locationScans);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, this.avgSpeed);
 
         if (this.internalCycle == 11) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
-            if (key.equals("Still")) {
-                isNotStill = false;
-            } else {
-                isNotStill = true;
-            }
+            boolean isNotStill;
+            isNotStill = !key.equals("Still");
 
             updateJSON(key, locationScans, distance);
-            //updateAAAA(locationScans);
 
             // Update Home and Stats Fragment
             homeFragment = (HomeFragment) MainActivity.this.homeFragment;
@@ -525,9 +576,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private float[] predict(double meanMagnitude, double maxSpeed) {
+    private float[] predict(double magnitude, double maxAcc, double minAcc, double gyroAvg, double gyroMin, double gyroMax, double speed, double minSpeed, double maxSpeed) {
         // build features vector
-        double[] features = {meanMagnitude, maxSpeed};
+        double[] features = {magnitude, maxAcc, minAcc,
+            gyroAvg, gyroMin, gyroMax,
+            speed, minSpeed, maxSpeed};
         FVec features_vector = FVec.Transformer.fromArray(features, false);
 
         //predict
@@ -542,10 +595,45 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
-        // Calculate if standing still
-        double avgSpeedInKm = convertToKmPerHour(avgSpeed);
+        float points = 0.0f;
 
-        return avgSpeedInKm <= Constants.MaxAvgSpeedStill && maxSpeed <= Constants.MaxSpeedStill;
+        // Wifi numbers
+        if (this.latestWiFiNumber >= 3) {
+            float percent = Math.abs(1f - ((float)this.oldWiFiNumber / (float)this.latestWiFiNumber));
+            if (this.latestWiFiNumber == this.oldWiFiNumber) {
+                points += 0.70f;
+            } else {
+                if (percent <= 0.10f) {
+                    points += 0.50f;
+                }
+                if (percent <= 0.25f && percent > 0.10f) {
+                    points += 0.30f;
+                }
+            }
+        } else {
+            points += 0.30f;
+        }
+
+        if (convertToKmPerHour(avgSpeed) <= Constants.MaxAvgSpeedStill && convertToKmPerHour(avgSpeed) > Constants.StopSpeed) {
+            points += 0.30f;
+        }
+
+        if (convertToKmPerHour(avgSpeed) <= Constants.TopAvgSpeedAllowed && convertToKmPerHour(avgSpeed) > Constants.MaxAvgSpeedStill) {
+            points += 0.10f;
+        }
+
+        if (convertToKmPerHour(avgSpeed) <= Constants.StopSpeed) {
+            points += 0.70f;
+        }
+
+        if (convertToKmPerHour(maxSpeed) <= Constants.MaxSpeedStill) {
+            points += 0.20f;
+        }
+
+        if (points < 0.8) {
+            System.out.println("COAP");
+        }
+        return points >= 0.79f;
     }
 
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
@@ -555,11 +643,11 @@ public class MainActivity extends AppCompatActivity {
                 maxSpeed = locationScan.getSpeed();
             }
         }
-
         return maxSpeed;
     }
 
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
+        this.avgSpeed = (int)locationScans.stream().mapToDouble(val -> val.getSpeed()).average().orElse(0.0);
         return locationScans.stream().mapToDouble(val -> val.getSpeed()).average().orElse(0.0);
     }
 
@@ -613,8 +701,6 @@ public class MainActivity extends AppCompatActivity {
             System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
             sumOfMagnitudes += Math.sqrt(sumOfPows);
         }
-
-
 
         return sumOfMagnitudes / accReadings.size();
     }

@@ -16,9 +16,11 @@ public class Constants {
     public static final String MagnReadingExtraName = "MagneticFieldReading";
 
     // General Logic
-    public static final double MaxSpeedStill = 2.5;
+    public static final double MaxAvgSpeedStill = 2.5f;
+    public static double TopAvgSpeedAllowed = 4.0f;
     public static final double MaxAccStill = 0.6;
-    public static double MaxAvgSpeedStill = 6;
+    public static double MaxSpeedStill = 5.5;
+    public static double StopSpeed = 0.0f;
     public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
 
     // Emission Logic
@@ -62,6 +64,7 @@ public class Constants {
     public static final String SMALL_CAR = "Small Car";
     public static final String BIG_CAR = "Sport Car";
     public static final String ELECTRIC_CAR = "Electric Car";
+
 
 
     private static int rgb(String hex) {

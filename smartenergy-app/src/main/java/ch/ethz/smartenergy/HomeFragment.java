@@ -412,10 +412,11 @@ public class HomeFragment extends Fragment {
         return (value / (double) total) * 100;
     }
 
-    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy) {
+    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy, int latestWiFiNumber, int oldWifi, int avgSpeed) {
 
         TextView t = getView().findViewById(R.id.accuracyText);
-        t.setText(accuracy);
+        String s = "GPS Accuracy: " + accuracy + " Wifi: " + latestWiFiNumber + " " + oldWifi + " Avg.Speed " + avgSpeed;
+        t.setText(s);
 
         for (String activity : Constants.ListModes) {
             if (!mostPresentWindow.containsKey(activity)) {
@@ -430,10 +431,10 @@ public class HomeFragment extends Fragment {
             CircleImageView img = listIcons.get(index);
             if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 33.3f &&
                     getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) > 15f) {
-                img.setAlpha(0.65f);
+                img.setAlpha(0.50f);
                 img.setBorderWidth(5);
             } else if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 66.6f) {
-                img.setAlpha(0.85f);
+                img.setAlpha(0.75f);
                 img.setBorderWidth(7);
             } else {
                 img.setAlpha(1f);
