@@ -46,6 +46,7 @@ public class Constants {
     public static final String TAG_FRAGMENT_HOME = "fragment_home";
     public static final String TAG_FRAGMENT_STATS = "fragment_stats";
     public static final String TAG_FRAGMENT_SETTINGS = "fragment_settings";
+    public static final String TAG_FRAGMENT_ONBOARDING = "fragment_onboarding";
     public static final String[] MENU_OPTIONS = {"Time per Mode", "CO₂ per Mode", "Distance per Mode", "Energy per Mode"};
     public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Transportation For Today",
             "CO₂ Per Transportation For Today", "Distance (m) Per Transportation For Today", "Energy (Wh) Per Transportation For Today"};
