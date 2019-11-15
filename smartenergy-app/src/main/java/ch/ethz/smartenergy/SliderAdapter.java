@@ -20,10 +20,18 @@ public class SliderAdapter extends PagerAdapter {
     }
 
     public String[] slide_headings = {
-            "HELLO",
-            "THIS",
-            "WORKS"
+            "Welcome to Smart Energy",
+            "Visualize your impact",
+            "Personalize your experience"
     };
+
+    public String[] slide_paragraphs = {
+            "With our application you can monitor your impact on the environment through transportation.",
+            "Look at the different graphs to have a clear picture of your energy usage and see how your behaviour changes over time. ",
+            "You can go to settings to personalize your experience. We can provide more accurate results if you can give us some information about your habits."
+    };
+
+
 
 
     @Override
@@ -44,9 +52,10 @@ public class SliderAdapter extends PagerAdapter {
         View view = layoutInflater.inflate(R.layout.slide_layout, container, false);
 
         TextView slideHeading = (TextView) view.findViewById(R.id.slideHeading);
+        TextView slideParagraph = (TextView) view.findViewById(R.id.slideParagraph);
 
         slideHeading.setText(slide_headings[position]);
-
+        slideParagraph.setText(slide_paragraphs[position]);
         container.addView(view);
 
         return view;

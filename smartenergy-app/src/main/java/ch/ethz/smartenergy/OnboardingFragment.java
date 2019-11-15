@@ -70,6 +70,9 @@ public class OnboardingFragment extends Fragment {
                     editor.apply();
 
 
+                    MainActivity main = (MainActivity) getActivity();
+                    main.changeViewToHome();
+
                 }
 
                 slideViewPager.setCurrentItem(currentPage + 1);
@@ -103,7 +106,7 @@ public class OnboardingFragment extends Fragment {
         }
 
         if(dots.length > 0){
-            dots[position].setTextColor(getContext().getColor(R.color.colorBlack));
+            dots[position].setTextColor(getContext().getColor(R.color.colorWhite));
         }
 
     }
