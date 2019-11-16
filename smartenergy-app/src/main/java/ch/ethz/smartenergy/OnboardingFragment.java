@@ -73,6 +73,8 @@ public class OnboardingFragment extends Fragment {
                     MainActivity main = (MainActivity) getActivity();
                     main.changeViewToHome();
 
+                    currentPage = -1;
+
                 }
 
                 slideViewPager.setCurrentItem(currentPage + 1);

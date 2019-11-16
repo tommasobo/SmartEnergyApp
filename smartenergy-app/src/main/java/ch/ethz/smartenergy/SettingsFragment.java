@@ -29,12 +29,12 @@ public class SettingsFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
-        TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
-        tv.setMovementMethod(new ScrollingMovementMethod());
+//        TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
+//        tv.setMovementMethod(new ScrollingMovementMethod());
 
-        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_diet), "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt");
+        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_diet), "This is a tooltip");
 
-        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_car), "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt");
+        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_car), "This is a tooltip");
 
         RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
 
@@ -98,6 +98,18 @@ public class SettingsFragment extends Fragment {
             hF.updateChart(true);
             StatsFragment sF = (StatsFragment) main.getStatsFragment();
             sF.updateChart();
+        });
+
+
+
+
+        Button buttonOpenSlider = (Button) getView().findViewById(R.id.buttonOpenSlider);
+        buttonOpenSlider.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity main = (MainActivity) getActivity();
+                main.changeViewToOnboarding();
+            }
         });
 
 

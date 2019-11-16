@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -19,6 +20,12 @@ public class SliderAdapter extends PagerAdapter {
         this.context = context;
     }
 
+    public int[] slide_images = {
+            R.drawable.placeholder,
+            R.drawable.placeholder,
+            R.drawable.placeholder
+    };
+
     public String[] slide_headings = {
             "Welcome to Smart Energy",
             "Visualize your impact",
@@ -27,10 +34,9 @@ public class SliderAdapter extends PagerAdapter {
 
     public String[] slide_paragraphs = {
             "With our application you can monitor your impact on the environment through transportation.",
-            "Look at the different graphs to have a clear picture of your energy usage and see how your behaviour changes over time. ",
+            "Look at the different graphs to have a clear picture of your daily carbon and energy footprint  and see how your behaviour changes over time. There are also other interesting stats like distance and time. ",
             "You can go to settings to personalize your experience. We can provide more accurate results if you can give us some information about your habits."
     };
-
 
 
 
@@ -51,9 +57,11 @@ public class SliderAdapter extends PagerAdapter {
         layoutInflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
         View view = layoutInflater.inflate(R.layout.slide_layout, container, false);
 
+        ImageView slideImage = (ImageView) view.findViewById(R.id.slideImage);
         TextView slideHeading = (TextView) view.findViewById(R.id.slideHeading);
         TextView slideParagraph = (TextView) view.findViewById(R.id.slideParagraph);
 
+        slideImage.setImageResource(slide_images[position]);
         slideHeading.setText(slide_headings[position]);
         slideParagraph.setText(slide_paragraphs[position]);
         container.addView(view);

@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
         }else {
             currentFragment = homeFragment;
 
-//            this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, onboardingFragment, Constants.TAG_FRAGMENT_ONBOARDING).hide(onboardingFragment).commit();
+            this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, onboardingFragment, Constants.TAG_FRAGMENT_ONBOARDING).hide(onboardingFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_SETTINGS).hide(settingsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, homeFragment, Constants.TAG_FRAGMENT_HOME).commit();
@@ -166,6 +166,13 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager.beginTransaction().hide(currentFragment).
                 show(homeFragment).commit();
         currentFragment = homeFragment;
+    }
+
+    public void changeViewToOnboarding() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().hide(currentFragment).
+                show(onboardingFragment).commit();
+        currentFragment = onboardingFragment;
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
