@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private final Fragment statsFragment = new StatsFragment();
     private final Fragment settingsFragment = new SettingsFragment();
     private final Fragment onboardingFragment = new OnboardingFragment();
+    private Fragment previousFragment = homeFragment;
     private Fragment currentFragment;
 
     private Map<String, Integer> mostPresentWindow;
@@ -134,22 +135,10 @@ public class MainActivity extends AppCompatActivity {
         boolean firstTime = preferences.getBoolean("first_time", true );
         if(firstTime){
             currentFragment = onboardingFragment;
-
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, onboardingFragment, Constants.TAG_FRAGMENT_ONBOARDING).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_SETTINGS).hide(settingsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container,homeFragment, Constants.TAG_FRAGMENT_HOME).hide(homeFragment).commit();
-//
-//            LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//            final View view = inflater.inflate(R.layout.fragment_onboarding, getHomeFragment(), false);
-//            Button remove=(Button) view.findViewById(R.id.remove_cart_items);
-
-//            OnboardingFragment oF = (OnboardingFragment) getOnboardingFragment();
-//            Button nextButton= (Button) oF.getNextButton();
-//            System.out.println("SIX CONSOOOOLES");
-//            System.out.println(nextButton.getText());
-
-
         }else {
             currentFragment = homeFragment;
 
@@ -161,6 +150,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void changeViewToPrevious() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().hide(currentFragment).
+                show(this.previousFragment).commit();
+        currentFragment = this.previousFragment;
+
+    }
+
     public void changeViewToHome() {
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().hide(currentFragment).
@@ -169,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void changeViewToOnboarding() {
+        previousFragment = currentFragment;
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().hide(currentFragment).
                 show(onboardingFragment).commit();
@@ -181,18 +179,21 @@ public class MainActivity extends AppCompatActivity {
                 FragmentManager fragmentManager = getSupportFragmentManager();
                 switch (item.getItemId()) {
                     case R.id.nav_home:
+                        previousFragment = currentFragment;
                         fragmentManager.beginTransaction().hide(currentFragment).
                                 show(homeFragment).commit();
                         currentFragment = homeFragment;
                         return true;
 
                     case R.id.nav_stats:
+                        previousFragment = currentFragment;
                         fragmentManager.beginTransaction().hide(currentFragment).
                                 show(statsFragment).commit();
                         currentFragment = statsFragment;
                         return true;
 
                     case R.id.nav_settings:
+                        previousFragment = currentFragment;
                         fragmentManager.beginTransaction().hide(currentFragment).
                                 show(settingsFragment).commit();
                         currentFragment = settingsFragment;
@@ -949,9 +950,7 @@ public class MainActivity extends AppCompatActivity {
                 sb.append(line);
             }
             return sb.toString();
-        } catch (FileNotFoundException fileNotFound) {
-            return null;
-        } catch (IOException ioException) {
+        } catch (IOException fileNotFound) {
             return null;
         }
     }

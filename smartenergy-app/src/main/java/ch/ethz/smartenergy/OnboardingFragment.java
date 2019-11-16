@@ -69,9 +69,8 @@ public class OnboardingFragment extends Fragment {
                     editor.putBoolean("first_time", false);
                     editor.apply();
 
-
                     MainActivity main = (MainActivity) getActivity();
-                    main.changeViewToHome();
+                    main.changeViewToPrevious();
 
                     currentPage = -1;
 
@@ -79,17 +78,10 @@ public class OnboardingFragment extends Fragment {
 
                 slideViewPager.setCurrentItem(currentPage + 1);
 
-
             }
         });
 
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                slideViewPager.setCurrentItem(currentPage - 1);
-
-            }
-        });
+        backButton.setOnClickListener(v -> slideViewPager.setCurrentItem(currentPage - 1));
 
     }
 
@@ -113,7 +105,7 @@ public class OnboardingFragment extends Fragment {
 
     }
 
-    ViewPager.OnPageChangeListener viewListener = new ViewPager.OnPageChangeListener() {
+    private ViewPager.OnPageChangeListener viewListener = new ViewPager.OnPageChangeListener() {
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
