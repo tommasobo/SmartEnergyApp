@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private final Fragment statsFragment = new StatsFragment();
     private final Fragment settingsFragment = new SettingsFragment();
     private final Fragment onboardingFragment = new OnboardingFragment();
+    private Fragment previousFragment = homeFragment;
     private Fragment currentFragment;
 
     private Map<String, Integer> mostPresentWindow;
@@ -134,26 +135,12 @@ public class MainActivity extends AppCompatActivity {
         boolean firstTime = preferences.getBoolean("first_time", true );
         if(firstTime){
             currentFragment = onboardingFragment;
-
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, onboardingFragment, Constants.TAG_FRAGMENT_ONBOARDING).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_SETTINGS).hide(settingsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container,homeFragment, Constants.TAG_FRAGMENT_HOME).hide(homeFragment).commit();
-//
-//            LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//            final View view = inflater.inflate(R.layout.fragment_onboarding, getHomeFragment(), false);
-//            Button remove=(Button) view.findViewById(R.id.remove_cart_items);
-
-//            OnboardingFragment oF = (OnboardingFragment) getOnboardingFragment();
-//            Button nextButton= (Button) oF.getNextButton();
-//            System.out.println("SIX CONSOOOOLES");
-//            System.out.println(nextButton.getText());
-
-
         }else {
             currentFragment = homeFragment;
-
-//            this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, onboardingFragment, Constants.TAG_FRAGMENT_ONBOARDING).hide(onboardingFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_SETTINGS).hide(settingsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, homeFragment, Constants.TAG_FRAGMENT_HOME).commit();
@@ -164,8 +151,8 @@ public class MainActivity extends AppCompatActivity {
     public void changeViewToHome() {
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().hide(currentFragment).
-                show(homeFragment).commit();
-        currentFragment = homeFragment;
+                show(this.previousFragment).commit();
+        currentFragment = this.previousFragment;
     }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
@@ -910,6 +897,12 @@ public class MainActivity extends AppCompatActivity {
         hF.menuClick(this.selectedViewGraph);
     }
 
+    public void showInstructions(View view) {
+        this.previousFragment = this.currentFragment;
+        this.currentFragment = onboardingFragment;
+        this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, onboardingFragment, Constants.TAG_FRAGMENT_ONBOARDING).commit();
+    }
+
     public void leftClickTopBar(View view) {
         getNextElement(-1);
         StatsFragment sF = (StatsFragment) statsFragment;
@@ -942,9 +935,7 @@ public class MainActivity extends AppCompatActivity {
                 sb.append(line);
             }
             return sb.toString();
-        } catch (FileNotFoundException fileNotFound) {
-            return null;
-        } catch (IOException ioException) {
+        } catch (IOException fileNotFound) {
             return null;
         }
     }

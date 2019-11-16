@@ -27,8 +27,8 @@ public class SettingsFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
-        TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
-        tv.setMovementMethod(new ScrollingMovementMethod());
+        //TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
+        //tv.setMovementMethod(new ScrollingMovementMethod());
 
         RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
 
