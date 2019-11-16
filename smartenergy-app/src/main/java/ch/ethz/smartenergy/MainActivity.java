@@ -221,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
         this.accuracy = "";
         locationScans.forEach(e->this.accuracy = this.accuracy + (int)e.getAccuracy() + " ");
 
-        if (this.lastGPSUpdate >= 23) {
+        if (this.lastGPSUpdate >= 6) {
             locationScans.removeIf(location -> location.getAccuracy() >= 2000);
         } else {
             locationScans.removeIf(location -> location.getAccuracy() >= 45);
@@ -244,6 +244,11 @@ public class MainActivity extends AppCompatActivity {
             this.latestKnownLocation.setLatitude(lat1);
         }
 
+        if (this.latestKnownLocation.getLatitude() == lat2 && lon2 == this.latestKnownLocation.getLongitude()) {
+            this.lastGPSUpdate++;
+            return 0.0;
+        }
+        
         float[] result = new float[1];
         Location.distanceBetween(this.latestKnownLocation.getLatitude(), this.latestKnownLocation.getLongitude(), lat2, lon2, result);
 
@@ -500,7 +505,7 @@ public class MainActivity extends AppCompatActivity {
 
         distance += calculateDistance(locationScans);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, this.avgSpeed);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed));
 
         if (this.internalCycle == 11) {
 
