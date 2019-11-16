@@ -16,9 +16,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -48,7 +46,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
@@ -100,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private Location latestKnownLocation = null;
     private int avgSpeed;
     private int lastGPSUpdate = 0;
+    private Map<Integer, String> previousModes = new HashMap<>();
 
 
     @Override
@@ -119,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // load pretrained predictor
-            InputStream model = getResources().openRawResource(R.raw.xgboost2);
+            InputStream model = getResources().openRawResource(R.raw.xgboost);
             predictor = new Predictor(model);
 
             // load pretrained nn predictor
@@ -248,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
             this.lastGPSUpdate++;
             return 0.0;
         }
-        
+
         float[] result = new float[1];
         Location.distanceBetween(this.latestKnownLocation.getLatitude(), this.latestKnownLocation.getLongitude(), lat2, lon2, result);
 
@@ -266,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
             String jsonString = read(this, "data.json");
             //do the json parsing here and do the rest of functionality of app
         } else {
-            boolean isFileCreated = create(this, "data.json", "{}");
+            boolean isFileCreated = create(this, "{}");
             if(isFileCreated) {
                 //proceed with storing the first
             } else {
@@ -340,7 +338,7 @@ public class MainActivity extends AppCompatActivity {
             exists = true;
         }
 
-        create(this,"data.json", json.toString());
+        create(this, json.toString());
 
     }
 
@@ -378,9 +376,7 @@ public class MainActivity extends AppCompatActivity {
                             getLongitude(scan.getLocationScans()));
 
 
-                    float[] predictionsXGBoost = predict(meanMagnitude, maxAcc, minAcc,
-                            gyroAvg, gyroMin, gyroMax,
-                            maxSpeed, avgSpeed, minSpeed);
+                    float[] predictionsXGBoost = predict(meanMagnitude, maxSpeed);
 
                     //predict_NN(scan.getAccReadings());
 
@@ -636,11 +632,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private float[] predict(double magnitude, double maxAcc, double minAcc, double gyroAvg, double gyroMin, double gyroMax, double speed, double minSpeed, double maxSpeed) {
+    private float[] predict(double magnitude, double maxAcc) {
         // build features vector
-        double[] features = {magnitude, maxAcc, minAcc,
-            gyroAvg, gyroMin, gyroMax,
-            speed, minSpeed, maxSpeed};
+        double[] features = {magnitude, maxAcc};
         FVec features_vector = FVec.Transformer.fromArray(features, false);
 
         //predict
@@ -786,11 +780,15 @@ public class MainActivity extends AppCompatActivity {
      * Ask for fine location permissions
      */
     private void askPermissions() {
-        String[] permissions = {
-                Manifest.permission.ACCESS_FINE_LOCATION
-        };
 
-        ActivityCompat.requestPermissions(MainActivity.this, permissions, PERMISSION_ALL);
+        List<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
+
+        ActivityCompat.requestPermissions(MainActivity.this, permissions.toArray(new String[0]), PERMISSION_ALL);
         locationRequestCount = 0;
         locationSettingsRequest();
     }
@@ -951,17 +949,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean create(Context context, String fileName, String jsonString){
+    private boolean create(Context context, String jsonString){
         try {
-            FileOutputStream fos = context.openFileOutput(fileName,Context.MODE_PRIVATE);
+            FileOutputStream fos = context.openFileOutput("data.json",Context.MODE_PRIVATE);
             if (jsonString != null) {
                 fos.write(jsonString.getBytes());
             }
             fos.close();
             return true;
-        } catch (FileNotFoundException fileNotFound) {
-            return false;
-        } catch (IOException ioException) {
+        } catch (IOException fileNotFound) {
             return false;
         }
 
