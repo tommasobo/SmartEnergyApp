@@ -41,7 +41,6 @@ import org.tensorflow.lite.Interpreter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,7 +97,9 @@ public class MainActivity extends AppCompatActivity {
     private Location latestKnownLocation = null;
     private int avgSpeed;
     private int lastGPSUpdate = 0;
-    private Map<Integer, String> previousModes = new HashMap<>();
+    private boolean gpsOn = false;
+    private int lastKnownMode = 0;
+    private List<Integer> previousModes = new ArrayList<Integer>();
 
 
     @Override
@@ -118,12 +119,11 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // load pretrained predictor
-            InputStream model = getResources().openRawResource(R.raw.xgboost);
+            InputStream model = getResources().openRawResource(R.raw.xgboost_base);
             predictor = new Predictor(model);
 
             // load pretrained nn predictor
             load_assets();
-
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -156,13 +156,6 @@ public class MainActivity extends AppCompatActivity {
                 show(this.previousFragment).commit();
         currentFragment = this.previousFragment;
 
-    }
-
-    public void changeViewToHome() {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().hide(currentFragment).
-                show(homeFragment).commit();
-        currentFragment = homeFragment;
     }
 
     public void changeViewToOnboarding() {
@@ -204,7 +197,6 @@ public class MainActivity extends AppCompatActivity {
             };
 
 
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -217,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
     }
 
-    private double calculateDistance(ArrayList<LocationScan> locationScans) {
+    private double calculateDistance(ArrayList<LocationScan> locationScans, int mode) {
 
         if (locationScans == null || locationScans.isEmpty()) {
             this.lastGPSUpdate++;
@@ -227,10 +219,11 @@ public class MainActivity extends AppCompatActivity {
         this.accuracy = "";
         locationScans.forEach(e->this.accuracy = this.accuracy + (int)e.getAccuracy() + " ");
 
-        if (this.lastGPSUpdate >= 6) {
-            locationScans.removeIf(location -> location.getAccuracy() >= 2000);
+        // Relax rules if we are missing GPS for a long time
+        if (this.lastGPSUpdate >= Constants.MINUTES_WITHOUT_GPS) {
+            locationScans.removeIf(location -> location.getAccuracy() >= 1000);
         } else {
-            locationScans.removeIf(location -> location.getAccuracy() >= 45);
+            locationScans.removeIf(location -> location.getAccuracy() >= 30);
         }
 
         if (locationScans.isEmpty()) {
@@ -239,6 +232,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         this.lastGPSUpdate = 0;
+        this.lastKnownMode = mode;
         double lon1 = locationScans.get(0).getLongitude();
         double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
         double lat1 = locationScans.get(0).getLatitude();
@@ -495,11 +489,23 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateData(boolean isStill, float[] predictionsXGBoost, ArrayList<LocationScan> locationScans) {
         List<Float> listPredictions = new ArrayList<Float>();
+
+        for (Integer index : this.previousModes) {
+            predictions[index] += Constants.BONUS_PREVIOUS;
+        }
+
         for (float prediction : predictions) {
             listPredictions.add(prediction);
         }
 
+        isGPSOn(locationScans);
+
         int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
+
+        if (this.previousModes.size() == 4) {
+            this.previousModes.clear();
+        }
+        this.previousModes.add(this.previousModes.size(), indexMaxMode);
 
         if (isStill) {
             this.mostPresentWindow.put(Constants.ListModes[8], this.mostPresentWindow.getOrDefault(Constants.ListModes[8], 0) + 1);
@@ -507,7 +513,7 @@ public class MainActivity extends AppCompatActivity {
             this.mostPresentWindow.put(Constants.ListModes[indexMaxMode], this.mostPresentWindow.getOrDefault(Constants.ListModes[indexMaxMode], 0) + 1);
         }
 
-        distance += calculateDistance(locationScans);
+        distance += calculateDistance(locationScans,indexMaxMode);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
         homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed));
 
@@ -531,6 +537,30 @@ public class MainActivity extends AppCompatActivity {
             distance = 0;
         }
 
+    }
+
+
+    private void isGPSOn(ArrayList<LocationScan> locationScans) {
+        if (locationScans == null || locationScans.isEmpty()) {
+            this.gpsOn = false;
+        }
+
+        this.gpsOn = false;
+        locationScans.forEach(e -> {
+            if (e.getAccuracy() < 1200) {
+                this.gpsOn = true;
+            }
+        });
+
+        this.lastGPSUpdate = 0;
+        double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
+        double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
+
+        if (this.latestKnownLocation != null) {
+            if (this.latestKnownLocation.getLatitude() == lat2 && lon2 == this.latestKnownLocation.getLongitude()) {
+                this.gpsOn = false;
+            }
+        }
     }
 
     private void load_assets() {
@@ -659,6 +689,11 @@ public class MainActivity extends AppCompatActivity {
     private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
         float points = 0.0f;
 
+        // Case where no GPS detected
+        if (!this.gpsOn) {
+            //
+        }
+
         // Wifi numbers
         if (this.latestWiFiNumber >= 3) {
             float percent = Math.abs(1f - ((float)this.oldWiFiNumber / (float)this.latestWiFiNumber));
@@ -706,8 +741,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
-        this.avgSpeed = (int)locationScans.stream().mapToDouble(val -> val.getSpeed()).average().orElse(0.0);
-        return locationScans.stream().mapToDouble(val -> val.getSpeed()).average().orElse(0.0);
+        this.avgSpeed = (int)locationScans.stream().mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        return locationScans.stream().mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
     }
 
     private double getLatitude(ArrayList<LocationScan> locationScans) {

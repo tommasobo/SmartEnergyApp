@@ -16,11 +16,12 @@ public class Constants {
     public static final String MagnReadingExtraName = "MagneticFieldReading";
 
     // General Logic
-    public static final double MaxAvgSpeedStill = 2.5f;
-    public static double TopAvgSpeedAllowed = 4.0f;
+    public static final double MaxAvgSpeedStill = 2.0f;
+    public static final double TopAvgSpeedAllowed = 3.0f;
     public static final double MaxAccStill = 0.6;
-    public static double MaxSpeedStill = 5.5;
-    public static double StopSpeed = 0.0f;
+    public static final double MaxSpeedStill = 4.0;
+    public static final double StopSpeed = 0.0f;
+    public static final double BONUS_PREVIOUS = 0.02;
     public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
 
     // Emission Logic
@@ -39,7 +40,6 @@ public class Constants {
     public static final double co2MultiplierAverageDietBicycle = 1.0;
     public static final double co2MultiplierNoDietWalking = 0.0;
     public static final double co2MultiplierNoDietBicycle = 0.0;
-
 
     // UI
     public static final String[] listModesVerbose = {"on foot", "in a train", "on a bus", "in a car", "in a tram", "on a bicycle", "on a e-bike", "riding a bike", "not doing much"};
@@ -65,8 +65,7 @@ public class Constants {
     public static final String SMALL_CAR = "Small Car";
     public static final String BIG_CAR = "Sport Car";
     public static final String ELECTRIC_CAR = "Electric Car";
-
-
+    public static final int MINUTES_WITHOUT_GPS = 23; // Equals two minutes
 
     private static int rgb(String hex) {
         int color = (int) Long.parseLong(hex.replace("#", ""), 16);

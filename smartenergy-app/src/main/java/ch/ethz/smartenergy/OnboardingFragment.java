@@ -85,7 +85,7 @@ public class OnboardingFragment extends Fragment {
 
     }
 
-    public void addDotsNavigation(int position){
+    private void addDotsNavigation(int position){
 
         dots = new TextView[3];
         dotLayout.removeAllViews();
