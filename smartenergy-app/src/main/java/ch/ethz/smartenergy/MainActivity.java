@@ -378,7 +378,9 @@ public class MainActivity extends AppCompatActivity {
                             getLongitude(scan.getLocationScans()));
 
 
-                    float[] predictionsXGBoost = predict(meanMagnitude, maxSpeed);
+                    float[] predictionsXGBoost = predict(
+                            meanMagnitude, avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccX(scan.getGyroReadings()),
+                            maxSpeed, minSpeed, avgSpeed);
 
                     //predict_NN(scan.getAccReadings());
 
@@ -676,9 +678,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private float[] predict(double magnitude, double maxAcc) {
+    private float[] predict(double meanMagnitude, double avgAccX, double avgAccY, double avgAccZ, double maxSpeed, double minSpeed, double avgSpeed) {
         // build features vector
-        double[] features = {magnitude, maxAcc};
+        double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
+                                maxSpeed, minSpeed, avgSpeed};
         FVec features_vector = FVec.Transformer.fromArray(features, false);
 
         //predict
