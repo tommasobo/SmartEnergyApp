@@ -57,6 +57,7 @@ import java.util.Map;
 
 import biz.k11i.xgboost.Predictor;
 import biz.k11i.xgboost.util.FVec;
+import ch.ethz.smartenergy.model.BluetoothScan;
 import ch.ethz.smartenergy.model.LocationScan;
 import ch.ethz.smartenergy.model.ScanResult;
 import ch.ethz.smartenergy.model.SensorReading;
@@ -66,7 +67,7 @@ import ch.ethz.smartenergy.service.SensorScanPeriod;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int internalCycle = 0;
+    private int internalCycle = 1;
     private int selectedViewGraph = 0;
 
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
@@ -99,7 +100,8 @@ public class MainActivity extends AppCompatActivity {
     private int lastGPSUpdate = 0;
     private boolean gpsOn = false;
     private int lastKnownMode = 0;
-    private List<Integer> previousModes = new ArrayList<Integer>();
+    private int blueNumbers = 0; // temp
+    private List<Integer> previousModes = new ArrayList<>();
 
 
     @Override
@@ -119,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // load pretrained predictor
-            InputStream model = getResources().openRawResource(R.raw.xgboost_base);
+            InputStream model = getResources().openRawResource(R.raw.xgboost);
             predictor = new Predictor(model);
 
             // load pretrained nn predictor
@@ -303,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
-                    this.mostPresentPersistent.put(key, temp + 1);
+                    this.mostPresentPersistent.put(key, temp + 2);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     double d = activity.getJSONObject(key).getDouble("distance");
                     activity.getJSONObject(key).put("distance", d + distance);
@@ -323,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
-                    this.mostPresentPersistent.put(key, temp + 1);
+                    this.mostPresentPersistent.put(key, temp + 2);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     activity.getJSONObject(key).put("distance", distance);
                 }
@@ -353,6 +355,8 @@ public class MainActivity extends AppCompatActivity {
             if (data.containsKey(Constants.WindowBroadcastExtraName)) {
                 ScanResult scan = (ScanResult) data.getSerializable(Constants.WindowBroadcastExtraName);
                 if (scan != null) {
+
+
                     double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings());
                     double minAcc = calculateMinAcc(scan.getAccReadings());
                     double maxAcc = calculateMaxAcc(scan.getAccReadings());
@@ -378,9 +382,13 @@ public class MainActivity extends AppCompatActivity {
                             getLongitude(scan.getLocationScans()));
 
 
+                    int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
+                    MainActivity.this.blueNumbers = bluetoothNumber;
                     float[] predictionsXGBoost = predict(
-                            meanMagnitude, avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccX(scan.getGyroReadings()),
-                            maxSpeed, minSpeed, avgSpeed);
+                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+                            maxSpeed, minSpeed, avgSpeed,
+                            bluetoothNumber,
+                            calculateMeanMagnitude(scan.getGyroReadings()), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()));
 
                     //predict_NN(scan.getAccReadings());
 
@@ -397,6 +405,19 @@ public class MainActivity extends AppCompatActivity {
         }
 
     };
+
+    private int getBluetoothNumbers(ArrayList<BluetoothScan> bluetoothScans) {
+        if (bluetoothScans == null || bluetoothScans.isEmpty()) {
+            return 0;
+        }
+
+        List<String> listBluetooth = new ArrayList<>();
+        bluetoothScans.forEach(e -> e.getDiscoveredDevices().forEach(device -> {
+            listBluetooth.add(device.getMac());
+        }));
+
+        return (int)listBluetooth.stream().distinct().count();
+    }
 
     private double calculateMinGyro(ArrayList<SensorReading> gyroReadings) {
         if (gyroReadings.size() == 0) return 0;
@@ -480,11 +501,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double calculateMinSpead(ArrayList<LocationScan> locationScans) {
-        double minSpeed = 0;
+        double minSpeed = 9999;
         for (LocationScan locationScan : locationScans) {
-            if (locationScan.getSpeed() < minSpeed) {
+            if (locationScan.getSpeed() < minSpeed && locationScan.getAccuracy() <= 70) {
                 minSpeed = locationScan.getSpeed();
             }
+        }
+
+        if (minSpeed == 9999) {
+            return 0.0;
         }
         return minSpeed;
     }
@@ -517,9 +542,9 @@ public class MainActivity extends AppCompatActivity {
 
         distance += calculateDistance(locationScans,indexMaxMode);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed));
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers);
 
-        if (this.internalCycle == 11) {
+        if (this.internalCycle == 12) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
             boolean isNotStill;
@@ -678,11 +703,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private float[] predict(double meanMagnitude, double avgAccX, double avgAccY, double avgAccZ, double maxSpeed, double minSpeed, double avgSpeed) {
+    private float[] predict(double meanMagnitude, double avgAccX, double avgAccY, double avgAccZ,
+                            double maxSpeed, double minSpeed, double avgSpeed,
+                            int bluetoothNumbers,
+                            double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ) {
         // build features vector
         double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
-                                maxSpeed, minSpeed, avgSpeed};
-        FVec features_vector = FVec.Transformer.fromArray(features, false);
+                                maxSpeed, minSpeed, avgSpeed,
+                            bluetoothNumbers, magnitudeGyro, avgGyroX, avgGyroY, avgGyroZ};
+
+        double[] features2 = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
+                            bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+                maxSpeed, avgSpeed, minSpeed};
+        FVec features_vector = FVec.Transformer.fromArray(features2, false);
 
         //predict
         float[] predictions = predictor.predict(features_vector);
@@ -742,16 +775,18 @@ public class MainActivity extends AppCompatActivity {
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
         double maxSpeed = 0;
         for (LocationScan locationScan : locationScans) {
-            if (locationScan.getSpeed() > maxSpeed) {
-                maxSpeed = locationScan.getSpeed();
+            if (locationScan.getAccuracy() <= 70) {
+                if (locationScan.getSpeed() > maxSpeed) {
+                    maxSpeed = locationScan.getSpeed();
+                }
             }
         }
         return maxSpeed;
     }
 
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
-        this.avgSpeed = (int)locationScans.stream().mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
-        return locationScans.stream().mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        this.avgSpeed = (int)locationScans.stream().filter(e->e.getAccuracy()<=70).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        return locationScans.stream().filter(e->e.getAccuracy()<=70).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
     }
 
     private double getLatitude(ArrayList<LocationScan> locationScans) {
