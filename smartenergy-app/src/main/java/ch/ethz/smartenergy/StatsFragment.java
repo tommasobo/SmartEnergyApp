@@ -140,10 +140,11 @@ public class StatsFragment extends Fragment {
     private void setChartUI(List<JSONObject> listJson) {
         Calendar cal = Calendar.getInstance();
         String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH);
-        chart.getDescription().setText(Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + selectedFilterText);
+        TextView tvDesc = getView().findViewById(R.id.textDescription);
+        String s = Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + selectedFilterText;
+        tvDesc.setText(s);
         DisplayMetrics ds = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(ds);
-        chart.getDescription().setTextSize(12f);
         chart.setData(lineData);
         chart.getLineData().setValueFormatter(new ValueFormatter() {
             @Override
@@ -164,6 +165,7 @@ public class StatsFragment extends Fragment {
         });
         chart.getAxisRight().setDrawGridLines(false);
         chart.getAxisLeft().setAxisMinimum(0);
+        chart.getDescription().setText("");
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);

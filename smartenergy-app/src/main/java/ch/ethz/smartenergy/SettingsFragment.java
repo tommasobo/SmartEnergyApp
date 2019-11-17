@@ -29,13 +29,8 @@ public class SettingsFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
-//        TextView tv = (TextView) getView().findViewById(R.id.textViewInfo);
-//        tv.setMovementMethod(new ScrollingMovementMethod());
-
         TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_diet), "This is a tooltip");
-
         TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_car), "This is a tooltip");
-
         RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());

@@ -543,6 +543,7 @@ public class MainActivity extends AppCompatActivity {
     private void isGPSOn(ArrayList<LocationScan> locationScans) {
         if (locationScans == null || locationScans.isEmpty()) {
             this.gpsOn = false;
+            return;
         }
 
         this.gpsOn = false;
@@ -551,6 +552,11 @@ public class MainActivity extends AppCompatActivity {
                 this.gpsOn = true;
             }
         });
+
+        if (locationScans.isEmpty()) {
+            this.gpsOn = false;
+            return;
+        }
 
         this.lastGPSUpdate = 0;
         double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
