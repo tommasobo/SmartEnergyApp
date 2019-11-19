@@ -143,15 +143,23 @@ public class StatsFragment extends Fragment {
         TextView tvDesc = getView().findViewById(R.id.textDescription);
         String s = Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + selectedFilterText;
         tvDesc.setText(s);
-        DisplayMetrics ds = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(ds);
         chart.setData(lineData);
-        chart.getLineData().setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return ("" + (int)value);
-            }
-        });
+        if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
+            chart.getData().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+
+                    return String.format(Locale.ENGLISH, "%.2f", value);
+                }
+            });
+        } else {
+            chart.getData().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+                    return ("" + (int) value);
+                }
+            });
+        }
 
         chart.getAxisRight().setEnabled(false);
         chart.getAxisLeft().setDrawGridLines(true);
@@ -375,9 +383,9 @@ public class StatsFragment extends Fragment {
                     } catch (ParseException ex) {
                         ex.printStackTrace();
                     }
-                    if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                    if (e.getJSONObject(activity).getDouble("distance") >= 10) {
                         Date date = cal.getTime();
-                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (int)e.getJSONObject(activity).getDouble("distance"), activity));
+                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
                     }
                 } catch (JSONException ex) {
                     ex.printStackTrace();

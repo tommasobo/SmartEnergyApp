@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -115,14 +116,6 @@ public class HomeFragment extends Fragment {
     }
 
     void updateChart(boolean needsAnimation) {
-
-        // Temporary
-        if (this.mainActivity.getPredictions() != null) {
-            showResult();
-        }
-        if (this.mainActivity.getPredictionsNN() != null) {
-            appendResult();
-        }
 
         if (!isFilePresent(getActivity(), "data.json")) {
             return;
@@ -285,8 +278,8 @@ public class HomeFragment extends Fragment {
                 continue;
             }*/
             try {
-                if (todayData.getJSONObject(activity).getDouble("distance") >= 1.0) {
-                    pieChartEntries.add(new PieEntry((int)(todayData.getJSONObject(activity).getDouble("distance")), activity));
+                if (todayData.getJSONObject(activity).getDouble("distance") >= 10.0) {
+                    pieChartEntries.add(new PieEntry((float)(todayData.getJSONObject(activity).getDouble("distance") / 1000), activity));
                     colorEntries.add(Constants.MATERIAL_COLORS[i]);
                 }
             } catch (JSONException e) {
@@ -354,12 +347,23 @@ public class HomeFragment extends Fragment {
 
         this.chart.getDescription().setEnabled(false);
         this.chart.getLegend().setEnabled(false);
-        chart.getData().setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float value) {
-                return ("" + (int)value);
-            }
-        });
+
+        if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
+            chart.getData().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+
+                    return String.format(Locale.ENGLISH, "%.2f", value);
+                }
+            });
+        } else {
+            chart.getData().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float value) {
+                    return ("" + (int) value);
+                }
+            });
+        }
         int index = Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName);
         this.chart.setCenterText(Constants.PIE_GRAPH_DESCRIPTION[index]);
         this.chart.setCenterTextRadiusPercent(90f);
@@ -383,16 +387,6 @@ public class HomeFragment extends Fragment {
         return Color.rgb(r, g, b);
     }
 
-    void appendResult() {
-
-        float[] predictions = this.mainActivity.getPredictionsNN();
-        Log.d("PROBABILITIES: ", Arrays.toString(predictions));
-    }
-
-    void showResult() {
-        float[] predictions = this.mainActivity.getPredictions();
-    }
-
     void startScanning() {
         if (this.chart != null && this.chart.getData() == null) {
             this.chart.setNoDataText("Collecting Data, please wait...");
@@ -412,10 +406,10 @@ public class HomeFragment extends Fragment {
         return (value / (double) total) * 100;
     }
 
-    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy, int latestWiFiNumber, int oldWifi, int avgSpeed, boolean gpsOn, int blueNumbers) {
+    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy, int latestWiFiNumber, int oldWifi, int avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc) {
 
         TextView t = getView().findViewById(R.id.accuracyText);
-        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldVsNew): " + latestWiFiNumber + " " + oldWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers;
+        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldVsNew): " + latestWiFiNumber + " " + oldWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers + " Mean Acc: " +  String.format(Locale.ENGLISH, "%.4f", meanAcc);
         t.setText(s);
 
         for (String activity : Constants.ListModes) {

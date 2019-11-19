@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:onClick="rightClickTopBar"
-            android:padding="11sp"
+            android:padding="13sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -66,7 +66,7 @@
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
             android:onClick="leftClickTopBar"
-            android:padding="11sp"
+            android:padding="13sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -75,12 +75,11 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottomContainer"
-        android:layout_width="412dp"
+        android:layout_width="0dp"
         android:layout_height="347dp"
         android:background="#ffffff"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout"
         app:layout_constraintVertical_bias="0.0">
@@ -272,7 +271,7 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
-        android:layout_width="410dp"
+        android:layout_width="0dp"
         android:layout_height="328dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

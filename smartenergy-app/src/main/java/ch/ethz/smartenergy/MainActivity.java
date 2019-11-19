@@ -36,7 +36,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.tensorflow.lite.Interpreter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -74,10 +73,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_ALL = 4242;
     private int locationRequestCount = 0;
 
-    private Predictor predictor;
-    private Interpreter tflite_model;
-    private List<Double> train_mean;
-    private List<Double> train_std;
+    private Predictor predictor_with_gps;
+    private Predictor predictor_without_gps;
 
     private final Fragment homeFragment = new HomeFragment();
     private final Fragment statsFragment = new StatsFragment();
@@ -89,8 +86,8 @@ public class MainActivity extends AppCompatActivity {
     private Map<String, Integer> mostPresentWindow;
     private Map<String, Integer> mostPresentPersistent;
 
-    private float[] predictionsNN;
     private float[] predictions;
+    private int countReset = 0;
     private double distance;
     private String accuracy = "";
     private int latestWiFiNumber = 0;
@@ -101,7 +98,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean gpsOn = false;
     private int lastKnownMode = 0;
     private int blueNumbers = 0; // temp
+    private int previousBlueNumbers = 0;
     private List<Integer> previousModes = new ArrayList<>();
+    private double meanAcc;
 
 
     @Override
@@ -115,24 +114,20 @@ public class MainActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation_view);
         bottomNav.setOnNavigationItemSelectedListener(navListener);
 
         try {
-            // load pretrained predictor
-            InputStream model = getResources().openRawResource(R.raw.xgboost);
-            predictor = new Predictor(model);
-
-            // load pretrained nn predictor
-            load_assets();
-
+            // load pretrained predictor_with_gps
+            InputStream model = getResources().openRawResource(R.raw.xgboost_with_gps);
+            predictor_with_gps = new Predictor(model);
+            InputStream model_no_gps = getResources().openRawResource(R.raw.xgboost_without_gps);
+            predictor_without_gps = new Predictor(model_no_gps);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
 
         registerReceiver();
-
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         boolean firstTime = preferences.getBoolean("first_time", true );
         if(firstTime){
@@ -149,7 +144,6 @@ public class MainActivity extends AppCompatActivity {
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, homeFragment, Constants.TAG_FRAGMENT_HOME).commit();
         }
-
     }
 
     public void changeViewToPrevious() {
@@ -157,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager.beginTransaction().hide(currentFragment).
                 show(this.previousFragment).commit();
         currentFragment = this.previousFragment;
-
     }
 
     public void changeViewToOnboarding() {
@@ -349,66 +342,76 @@ public class MainActivity extends AppCompatActivity {
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Bundle data = intent.getExtras();
-            if (data == null) return;
+        Bundle data = intent.getExtras();
+        if (data == null) return;
 
-            if (data.containsKey(Constants.WindowBroadcastExtraName)) {
-                ScanResult scan = (ScanResult) data.getSerializable(Constants.WindowBroadcastExtraName);
-                if (scan != null) {
-
-
-                    double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings());
-                    double minAcc = calculateMinAcc(scan.getAccReadings());
-                    double maxAcc = calculateMaxAcc(scan.getAccReadings());
-                    double maxSpeed = calculateMaxSpead(scan.getLocationScans());
-                    double avgSpeed = calculateAvgSpeed(scan.getLocationScans());
-                    double minSpeed = calculateMinSpead(scan.getLocationScans());
-                    double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
-                    double gyroMin = calculateMinGyro(scan.getGyroReadings());
-                    double gyroMax = calculateMaxGyro(scan.getGyroReadings());
-                    if (MainActivity.this.oldWiFiNumber != -1) {
-                        MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
-                    }
-                    if (scan.getWifiScans().size() >= 1) {
-                        MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
-                    }
-                    if (MainActivity.this.oldWiFiNumber == -1) {
-                        MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
-                    }
-                    System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
-
-                    boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
-                            avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()), getLatitude(scan.getLocationScans()),
-                            getLongitude(scan.getLocationScans()));
+        if (data.containsKey(Constants.WindowBroadcastExtraName)) {
+            ScanResult scan = (ScanResult) data.getSerializable(Constants.WindowBroadcastExtraName);
+            if (scan != null) {
 
 
-                    int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
-                    MainActivity.this.blueNumbers = bluetoothNumber;
-                    float[] predictionsXGBoost = predict(
-                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
-                            maxSpeed, minSpeed, avgSpeed,
-                            bluetoothNumber,
-                            calculateMeanMagnitude(scan.getGyroReadings()), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()));
-
-                    //predict_NN(scan.getAccReadings());
-
-                    updateData(isStill, predictionsXGBoost, scan.getLocationScans());
-
-                    HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-                    homeFragment.showResult();
-                    homeFragment.appendResult();
-
-                    MainActivity.this.internalCycle++;
+                double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings(), true);
+                double minAcc = calculateMinAcc(scan.getAccReadings());
+                double maxAcc = calculateMaxAcc(scan.getAccReadings());
+                double maxSpeed = calculateMaxSpead(scan.getLocationScans());
+                double avgSpeed = calculateAvgSpeed(scan.getLocationScans());
+                double minSpeed = calculateMinSpead(scan.getLocationScans());
+                double accuracyGPS = calculateAccuracy(scan.getLocationScans());
+                double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
+                double gyroMin = calculateMinGyro(scan.getGyroReadings());
+                double gyroMax = calculateMaxGyro(scan.getGyroReadings());
+                if (MainActivity.this.oldWiFiNumber != -1) {
+                    MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                 }
+                if (scan.getWifiScans().size() >= 1) {
+                    MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
+                }
+                if (MainActivity.this.oldWiFiNumber == -1) {
+                    MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                }
+                System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
+
+                boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
+                        avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()), getLatitude(scan.getLocationScans()),
+                        getLongitude(scan.getLocationScans()));
+
+
+                int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
+                MainActivity.this.blueNumbers = bluetoothNumber;
+                float[] predictionsXGBoost = predict(
+                        meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+                        maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+                        bluetoothNumber,
+                        calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+                        calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
+
+                //predict_NN(scan.getAccReadings());
+
+                updateData(isStill, predictionsXGBoost, scan.getLocationScans());
+
+                MainActivity.this.internalCycle++;
             }
+        }
 
         }
 
     };
 
+    private double calculateAccuracy(ArrayList<LocationScan> locationScans) {
+        return locationScans.stream().mapToDouble(LocationScan::getAccuracy).average().orElse(0.0);
+    }
+
     private int getBluetoothNumbers(ArrayList<BluetoothScan> bluetoothScans) {
-        if (bluetoothScans == null || bluetoothScans.isEmpty()) {
+        if (bluetoothScans == null) {
             return 0;
+        }
+
+        if (bluetoothScans.isEmpty() && countReset <= 3) {
+            countReset++;
+            return this.previousBlueNumbers;
+        } else if (bluetoothScans.isEmpty()){
+            this.previousBlueNumbers = 0;
+            countReset = 0;
         }
 
         List<String> listBluetooth = new ArrayList<>();
@@ -416,6 +419,7 @@ public class MainActivity extends AppCompatActivity {
             listBluetooth.add(device.getMac());
         }));
 
+        this.previousBlueNumbers = (int)listBluetooth.stream().distinct().count();
         return (int)listBluetooth.stream().distinct().count();
     }
 
@@ -503,7 +507,7 @@ public class MainActivity extends AppCompatActivity {
     private double calculateMinSpead(ArrayList<LocationScan> locationScans) {
         double minSpeed = 9999;
         for (LocationScan locationScan : locationScans) {
-            if (locationScan.getSpeed() < minSpeed && locationScan.getAccuracy() <= 70) {
+            if (locationScan.getSpeed() < minSpeed && locationScan.getAccuracy() <= 50) {
                 minSpeed = locationScan.getSpeed();
             }
         }
@@ -542,7 +546,7 @@ public class MainActivity extends AppCompatActivity {
 
         distance += calculateDistance(locationScans,indexMaxMode);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc);
 
         if (this.internalCycle == 12) {
 
@@ -596,129 +600,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void load_assets() {
-        try {
-            MappedByteBuffer tfliteModel = loadModelFile(MainActivity.this, "example_nn.tflite");
-            Interpreter.Options options = new Interpreter.Options();
-            this.tflite_model = new Interpreter(tfliteModel, options);
-
-
-            train_mean = new ArrayList<>();
-            train_std = new ArrayList<>();
-
-            try {
-                InputStream is = getAssets().open("train_mean.txt");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    train_mean.add(Double.valueOf(line));
-                }
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-            try {
-                InputStream is = getAssets().open("train_std.txt");
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-                String line = null;
-                while ((line = reader.readLine()) != null) {
-                    train_std.add(Double.valueOf(line));
-                }
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-
-    }
-
-    private void predict_NN(List<SensorReading> acc_readings) {
-        List<Double> magnitudes = new ArrayList<>();
-        List<Long> times = new ArrayList<>();
-        for (SensorReading reading : acc_readings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            magnitudes.add(sumOfPows);
-            times.add(reading.getReadingTime().getTime());
-        }
-
-        // Do nearest neighbor interpolation
-        List<Double> magnitudes_interpolated = new ArrayList<>();
-        double abs_sum = 0;
-        if (times.isEmpty()) {
-            return;
-        }
-        long windowStart = times.get(0);
-        for (int i = 0; i < 5000; i += 20) {
-            long timeNode = windowStart + i;
-            long last_diff = Math.abs(windowStart - timeNode);
-            for (int j = 0; j < times.size(); j++) {
-                long current_diff = Math.abs(times.get(j) - timeNode);
-                if (current_diff <= last_diff) {
-                    last_diff = current_diff;
-                    if (j + 1 == times.size()) {
-                        double value = magnitudes.get(j);
-                        magnitudes_interpolated.add(value);
-                        abs_sum += Math.abs(value);
-                    }
-                } else {
-                    double value = magnitudes.get(j);
-                    magnitudes_interpolated.add(value);
-                    abs_sum += Math.abs(value);
-                    break;
-                }
-
-            }
-        }
-
-        List<Double> magnitudes_normalized = new ArrayList<>();
-
-        // Scale with l1 norm
-        for (int i = 0; i < magnitudes_interpolated.size(); i++)
-            magnitudes_normalized.add(magnitudes_interpolated.get(i) / abs_sum);
-
-
-        // TODO: Scale to 0 mean and unit variance
-
-
-        float[][] inputs = new float[250][1];
-        for (int i = 0; i < magnitudes_normalized.size(); i++) {
-            inputs[i][0] = (magnitudes_normalized.get(i).floatValue() - train_mean.get(i).floatValue()) / train_std.get(i).floatValue();
-        }
-        Log.d("INPUTS: ", magnitudes_normalized.toString());
-        float[][] outputs = new float[1][8];
-
-        this.tflite_model.run(inputs, outputs);
-
-
-        float[] predictions = new float[outputs[0].length];
-
-        for (int i = 0; i < outputs[0].length; i++) {
-            predictions[i] = outputs[0][i];
-        }
-
-        this.predictionsNN = predictions;
-
-    }
-
     private float[] predict(double meanMagnitude, double avgAccX, double avgAccY, double avgAccZ,
-                            double maxSpeed, double minSpeed, double avgSpeed,
+                            double maxSpeed, double minSpeed, double avgSpeed, double accuracyGPS,
                             int bluetoothNumbers,
-                            double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ) {
-        // build features vector
-        double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
-                                maxSpeed, minSpeed, avgSpeed,
-                            bluetoothNumbers, magnitudeGyro, avgGyroX, avgGyroY, avgGyroZ};
+                            double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ,
+                            double magnitudeMagn, double avgMagnX, double avgMagnY, double avgMagnZ) {
 
-        double[] features2 = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
+        // build features vector
+        double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
                             bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
-                maxSpeed, avgSpeed, minSpeed};
-        FVec features_vector = FVec.Transformer.fromArray(features2, false);
+                            magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
+                            maxSpeed, minSpeed};
+        FVec features_vector = FVec.Transformer.fromArray(features, false);
 
         //predict
-        float[] predictions = predictor.predict(features_vector);
+        float[] predictions = predictor_with_gps.predict(features_vector);
 
         this.predictions = predictions;
         return predictions;
@@ -775,7 +671,7 @@ public class MainActivity extends AppCompatActivity {
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
         double maxSpeed = 0;
         for (LocationScan locationScan : locationScans) {
-            if (locationScan.getAccuracy() <= 70) {
+            if (locationScan.getAccuracy() <= 50) {
                 if (locationScan.getSpeed() > maxSpeed) {
                     maxSpeed = locationScan.getSpeed();
                 }
@@ -785,8 +681,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
-        this.avgSpeed = (int)locationScans.stream().filter(e->e.getAccuracy()<=70).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
-        return locationScans.stream().filter(e->e.getAccuracy()<=70).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        this.avgSpeed = (int)locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        return locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
     }
 
     private double getLatitude(ArrayList<LocationScan> locationScans) {
@@ -826,8 +722,11 @@ public class MainActivity extends AppCompatActivity {
         return accReadings.stream().mapToDouble(SensorReading::getValueOnZAxis).average().orElse(0.0);
     }
 
-    private double calculateMeanMagnitude(ArrayList<SensorReading> accReadings) {
-        if (accReadings.size() == 0) return 0;
+    private double calculateMeanMagnitude(ArrayList<SensorReading> accReadings, boolean isAcc) {
+        if (accReadings.size() == 0) {
+            if (isAcc) this.meanAcc = 0.0; // Remove this
+            return 0;
+        }
 
         double sumOfMagnitudes = 0;
 
@@ -840,6 +739,7 @@ public class MainActivity extends AppCompatActivity {
             sumOfMagnitudes += Math.sqrt(sumOfPows);
         }
 
+        if (isAcc) this.meanAcc = sumOfMagnitudes / accReadings.size();; // Remove this
         return sumOfMagnitudes / accReadings.size();
     }
 
@@ -1054,9 +954,6 @@ public class MainActivity extends AppCompatActivity {
         return file.exists();
     }
 
-    public float[] getPredictionsNN() {
-        return predictionsNN;
-    }
     public float[] getPredictions() {
         return predictions;
     }
