@@ -53,6 +53,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import biz.k11i.xgboost.Predictor;
 import biz.k11i.xgboost.util.FVec;
@@ -378,12 +383,29 @@ public class MainActivity extends AppCompatActivity {
 
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
-                float[] predictionsXGBoost = predict(
-                        meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
-                        maxSpeed, minSpeed, avgSpeed, accuracyGPS,
-                        bluetoothNumber,
-                        calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
-                        calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
+
+                Callable<float[]> callablePrediction = () -> {
+                    float[] predictionsXGBoost = predict(
+                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+                            bluetoothNumber,
+                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
+                    return predictionsXGBoost;
+                };
+
+                ExecutorService executor = Executors.newFixedThreadPool(1);
+                Future<float[]> future = executor.submit(callablePrediction);
+
+
+                float[] predictionsXGBoost = new float[0];
+                try {
+                    predictionsXGBoost = future.get();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
                 //predict_NN(scan.getAccReadings());
 
