@@ -12,6 +12,7 @@ import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -355,16 +356,18 @@ public class MainActivity extends AppCompatActivity {
             if (scan != null) {
 
 
+                // TODO: these calculations are responsible for the lag
                 double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings(), true);
-                double minAcc = calculateMinAcc(scan.getAccReadings());
-                double maxAcc = calculateMaxAcc(scan.getAccReadings());
+//                double minAcc = calculateMinAcc(scan.getAccReadings());
+//                double maxAcc = calculateMaxAcc(scan.getAccReadings());
                 double maxSpeed = calculateMaxSpead(scan.getLocationScans());
                 double avgSpeed = calculateAvgSpeed(scan.getLocationScans());
                 double minSpeed = calculateMinSpead(scan.getLocationScans());
                 double accuracyGPS = calculateAccuracy(scan.getLocationScans());
-                double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
-                double gyroMin = calculateMinGyro(scan.getGyroReadings());
-                double gyroMax = calculateMaxGyro(scan.getGyroReadings());
+//                double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
+//                double gyroMin = calculateMinGyro(scan.getGyroReadings());
+//                double gyroMax = calculateMaxGyro(scan.getGyroReadings());
+
                 if (MainActivity.this.oldWiFiNumber != -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                 }
@@ -384,30 +387,37 @@ public class MainActivity extends AppCompatActivity {
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
 
-                Callable<float[]> callablePrediction = () -> {
-                    float[] predictionsXGBoost = predict(
-                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
-                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
-                            bluetoothNumber,
-                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
-                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
-                    return predictionsXGBoost;
-                };
+//                Callable<float[]> callablePrediction = () -> {
+//                    float[] predictionsXGBoost = predict(
+//                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+//                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+//                            bluetoothNumber,
+//                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+//                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
+//                    return predictionsXGBoost;
+//                };
+//
+//                ExecutorService executor = Executors.newFixedThreadPool(1);
+//                Future<float[]> future = executor.submit(callablePrediction);
+//
+//
+//                float[] predictionsXGBoost = new float[0];
+//                try {
+//                    predictionsXGBoost = future.get();
+//                } catch (ExecutionException e) {
+//                    e.printStackTrace();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
 
-                ExecutorService executor = Executors.newFixedThreadPool(1);
-                Future<float[]> future = executor.submit(callablePrediction);
+                float[] predictionsXGBoost = predict(
+                        meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+                        maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+                        bluetoothNumber,
+                        calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+                        calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
 
-
-                float[] predictionsXGBoost = new float[0];
-                try {
-                    predictionsXGBoost = future.get();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                //predict_NN(scan.getAccReadings());
+//                predict_NN(scan.getAccReadings());
 
                 updateData(isStill, predictionsXGBoost, scan.getLocationScans());
 
