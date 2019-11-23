@@ -10,6 +10,7 @@
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorWhiteSoft">#cccccc</color>
     <color name="colorLightGrey">#eeeeee</color>
+    <color name="colorDarkGrey">#333333</color>
     <color name="colorGreen">#4CAF50</color>
     <color name="colorBlue">#207dff</color>
 
