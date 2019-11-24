@@ -242,14 +242,20 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setValueFormatter(new MonthViewFormatter());
         boolean forceLabelCount = false;
-        if (lineData.getXMin() != lineData.getXMax()) {
+        if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
+            chart.getXAxis().setLabelCount(7, false);
             chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
             chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+        } else {
+            if (lineData.getXMin() != lineData.getXMax()) {
+                chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
+                chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+            }
+            if (getLabelNumberForMonth(listJson.size()) > 3) {
+                forceLabelCount = true;
+            }
+            chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
         }
-        if (getLabelNumberForMonth(listJson.size()) > 3) {
-            forceLabelCount = true;
-        }
-        chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
         chart.getXAxis().setAxisLineWidth(1.2f);
