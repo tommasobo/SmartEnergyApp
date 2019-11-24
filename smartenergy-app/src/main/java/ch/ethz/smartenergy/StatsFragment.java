@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -47,7 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class StatsFragment extends Fragment {
+public class StatsFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
     private String selectedGraphName = Constants.MENU_OPTIONS[0];
     private TextView dataTitle;
@@ -55,6 +56,7 @@ public class StatsFragment extends Fragment {
     private LineData lineData;
     private List<Integer> colorEntries;
     private LineChart chart;
+    private String selectedTimeFrame = Constants.TIMEFRAME_OPTIONS[1];
 
     @Nullable
     @Override
@@ -73,9 +75,30 @@ public class StatsFragment extends Fragment {
                 R.array.list_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        spinner.setSelection(adapter.getPosition("Current Month"));
+        spinner.setSelection(adapter.getPosition("This Month"));
+        spinner.setOnItemSelectedListener(this);
 
         updateChart();
+    }
+
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        this.selectedTimeFrame = parent.getItemAtPosition(pos).toString();
+        updateChart();
+    }
+
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
+    }
+
+    private String getTitleGraph() {
+        if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
+            return "the past week";
+        } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
+            return Calendar.getInstance().getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH);
+        } else {
+            return String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+        }
     }
 
     private List<JSONObject> getJsonMonth(JSONObject json) {
@@ -103,6 +126,40 @@ public class StatsFragment extends Fragment {
         return listJson;
     }
 
+    private List<JSONObject> getJsonPastWeek(JSONObject json) {
+        List<JSONObject> listJson = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            Iterator <?> keys = json.keys();
+            while (keys.hasNext()) {
+                String key = (String) keys.next();
+                try {
+                    if (json.get(key) instanceof JSONObject) {
+                        JSONObject tempJson = json.getJSONObject(key);
+                        String[] out = key.split("-");
+
+                        Calendar calendar = Calendar.getInstance();
+                        calendar.setTime(calendar.getTime());
+                        calendar.add(Calendar.DAY_OF_YEAR, - i);
+
+                        // Fix problem with days starting with 0
+                        if (out[0].charAt(0) == '0') {
+                            out[0] = out[0].substring(1);
+                        }
+                        if (out[0].equals(String.valueOf(calendar.get(Calendar.DAY_OF_MONTH))) &&
+                            out[1].equals(String.valueOf(calendar.get(Calendar.MONTH) + 1)) &&
+                            out[2].equals(String.valueOf(calendar.get(Calendar.YEAR)))) {
+                            listJson.add(tempJson);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return listJson;
+    }
+
     void updateChart() {
         View v = getView();
         this.chart = v.findViewById(R.id.chart);
@@ -120,7 +177,14 @@ public class StatsFragment extends Fragment {
             Log.d("Error", err.toString());
         }
 
-        List<JSONObject> listJson = getJsonMonth(json);
+        List<JSONObject> listJson = null;
+        if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
+            listJson = getJsonPastWeek(json);
+        } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])){
+            listJson = getJsonMonth(json);
+        } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])){
+            listJson = getJsonMonth(json);
+        }
 
         chart.clear();
         chart.invalidate();
@@ -139,9 +203,8 @@ public class StatsFragment extends Fragment {
 
     private void setChartUI(List<JSONObject> listJson) {
         Calendar cal = Calendar.getInstance();
-        String selectedFilterText = cal.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH);
         TextView tvDesc = getView().findViewById(R.id.textDescription);
-        String s = Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + selectedFilterText;
+        String s = Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + getTitleGraph();
         tvDesc.setText(s);
         chart.setData(lineData);
         if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
@@ -239,6 +302,8 @@ public class StatsFragment extends Fragment {
                     rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
                     rgb("#D81B60")
             };
+            dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+
             dataSet.setColor(material_colors[i]);
             dataSet.setCircleRadius(5f);
             dataSet.setCircleColor(material_colors[i]);
@@ -293,6 +358,7 @@ public class StatsFragment extends Fragment {
                     rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
                     rgb("#D81B60")
             };
+            dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             dataSet.setColor(material_colors[i]);
             dataSet.setCircleRadius(5f);
             dataSet.setCircleColor(material_colors[i]);

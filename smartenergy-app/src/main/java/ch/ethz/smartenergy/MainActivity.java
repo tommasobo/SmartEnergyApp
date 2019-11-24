@@ -10,9 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
-import android.content.res.AssetFileDescriptor;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -45,8 +43,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -54,11 +50,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import biz.k11i.xgboost.Predictor;
 import biz.k11i.xgboost.util.FVec;
@@ -304,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
-                    this.mostPresentPersistent.put(key, temp + 2);
+                    this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     double d = activity.getJSONObject(key).getDouble("distance");
                     activity.getJSONObject(key).put("distance", d + distance);
@@ -324,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
-                    this.mostPresentPersistent.put(key, temp + 2);
+                    this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     activity.getJSONObject(key).put("distance", distance);
                 }
@@ -455,55 +446,6 @@ public class MainActivity extends AppCompatActivity {
         return (int)listBluetooth.stream().distinct().count();
     }
 
-    private double calculateMinGyro(ArrayList<SensorReading> gyroReadings) {
-        if (gyroReadings.size() == 0) return 0;
-        List<Double> listMagnitudes = new ArrayList<>();
-
-        for (SensorReading reading : gyroReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            listMagnitudes.add(Math.sqrt(sumOfPows));
-        }
-
-        return listMagnitudes.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
-    }
-
-    private double calculateMaxGyro(ArrayList<SensorReading> gyroReadings) {
-        if (gyroReadings.size() == 0) return 0;
-        List<Double> listMagnitudes = new ArrayList<>();
-
-        for (SensorReading reading : gyroReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            listMagnitudes.add(Math.sqrt(sumOfPows));
-        }
-
-        return listMagnitudes.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
-    }
-
-    private double calculateAvgGyro(ArrayList<SensorReading> gyroReadings) {
-        if (gyroReadings.size() == 0) return 0;
-
-        double sumOfMagnitudes = 0;
-
-        for (SensorReading reading : gyroReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            sumOfMagnitudes += Math.sqrt(sumOfPows);
-        }
-
-        return sumOfMagnitudes / gyroReadings.size();
-    }
-
     private double calculateMinAcc(ArrayList<SensorReading> accReadings) {
         if (accReadings.size() == 0) return 0;
         List<Double> listMagnitudes = new ArrayList<>();
@@ -578,9 +520,9 @@ public class MainActivity extends AppCompatActivity {
 
         distance += calculateDistance(locationScans,indexMaxMode);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
 
-        if (this.internalCycle == 12) {
+        if (this.internalCycle == 6) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
             boolean isNotStill;
@@ -601,7 +543,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
 
     private void isGPSOn(ArrayList<LocationScan> locationScans) {
         if (locationScans == null || locationScans.isEmpty()) {
@@ -775,17 +716,6 @@ public class MainActivity extends AppCompatActivity {
         return sumOfMagnitudes / accReadings.size();
     }
 
-    private MappedByteBuffer loadModelFile(Context context, String fileName) throws IOException {
-
-        AssetFileDescriptor fileDescriptor = context.getAssets().openFd("example_nn.tflite");
-        FileInputStream inputStream = fileDescriptor.createInputStream();
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-
-    }
-
     /**
      * Register broadcast receiver
      */
@@ -918,7 +848,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             this.startService(serviceIntent);
         }
-
     }
 
     public void rightClickTopBar(View view) {
@@ -986,10 +915,6 @@ public class MainActivity extends AppCompatActivity {
         return file.exists();
     }
 
-    public float[] getPredictions() {
-        return predictions;
-    }
-
     public Fragment getHomeFragment() {
         return homeFragment;
     }
@@ -997,8 +922,6 @@ public class MainActivity extends AppCompatActivity {
     public Fragment getStatsFragment() {
         return statsFragment;
     }
-
-
 
 }
 
