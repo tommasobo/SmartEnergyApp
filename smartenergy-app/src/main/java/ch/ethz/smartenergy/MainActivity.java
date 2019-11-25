@@ -522,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
         homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
 
-        if (this.internalCycle == 6) {
+        if (this.internalCycle == 10) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
             boolean isNotStill;
@@ -619,6 +619,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         } else {
+            points += 0.30f;
+        }
+
+        if (meanMagnitude <= 0.20) {
+            points += 0.50f;
+        } else if (meanMagnitude <= 0.40 && meanMagnitude > 0.20) {
             points += 0.30f;
         }
 
