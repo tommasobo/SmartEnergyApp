@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,7 +49,7 @@ import java.util.Objects;
 
 public class StatsFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
-    private String selectedGraphName = Constants.MENU_OPTIONS[0];
+    private String selectedGraphName = Constants.MENU_OPTIONS[1];
     private TextView dataTitle;
     private List<Entry> lineChartEntry;
     private LineData lineData;
@@ -126,6 +125,35 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return listJson;
     }
 
+    private List<JSONObject> getJsonYear(JSONObject json) {
+        List<JSONObject> listJson = new ArrayList<>();
+        List<Integer> listMonth = new ArrayList<>();
+        Iterator <?> keys = json.keys();
+
+        // For every month of the current year
+        //for (int i = 1; i <= 12; i++) {
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            try {
+                if (json.get(key) instanceof JSONObject) {
+                    JSONObject tempJson = json.getJSONObject(key);
+                    String[] out = key.split("-");
+
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(calendar.getTime());
+
+                    if (out[2].equals(String.valueOf(calendar.get(Calendar.YEAR)))) {
+                        listJson.add(tempJson);
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        //}
+        return listJson;
+    }
+
     private List<JSONObject> getJsonPastWeek(JSONObject json) {
         List<JSONObject> listJson = new ArrayList<>();
         for (int i = 6; i >= 0; i--) {
@@ -183,7 +211,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])){
             listJson = getJsonMonth(json);
         } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])){
-            listJson = getJsonMonth(json);
+            listJson = getJsonYear(json);
         }
 
         chart.clear();
@@ -227,7 +255,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         chart.getAxisRight().setEnabled(false);
         chart.getAxisLeft().setDrawGridLines(true);
         chart.getAxisLeft().setAxisLineWidth(1.2f);
-        chart.getAxisLeft().setGridLineWidth(0.7f);
+        chart.getAxisLeft().setGridLineWidth(0.6f);
         chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
@@ -240,7 +268,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setValueFormatter(new MonthViewFormatter());
+        if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+            xAxis.setValueFormatter(new YearViewFormatter());
+        } else {
+            xAxis.setValueFormatter(new MonthViewFormatter());
+        }
         boolean forceLabelCount = false;
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
             chart.getXAxis().setLabelCount(7, false);
@@ -254,7 +286,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             if (getLabelNumberForMonth(listJson.size()) > 3) {
                 forceLabelCount = true;
             }
-            chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
+            if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                chart.getXAxis().setLabelCount(12, true);
+            } else {
+                chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
+            }
         }
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
@@ -279,9 +315,14 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
     private void updateDataTime(List<JSONObject> listJson) {
         int i = 0;
+
         for (String activity: Constants.ListModes) {
             if (activity.equals("Still")) {
                 continue;
+            }
+            List<Integer> yearAvg = new ArrayList<>();
+            for (int j = 0; j < 12; j++) {
+                yearAvg.add(j, 0);
             }
             List<Entry> entries = new ArrayList<>();
             listJson.forEach(e -> {
@@ -294,14 +335,23 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     } catch (ParseException ex) {
                         ex.printStackTrace();
                     }
-                    if (e.getJSONObject(activity).getInt("time") != 0) {
-                        Date date = cal.getTime();
-                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
+                    if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                        this.getYearAvg(e, entries, yearAvg, activity);
+                    } else {
+                        if (e.getJSONObject(activity).getInt("time") != 0) {
+                            Date date = cal.getTime();
+                            entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
+                        }
                     }
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
             });
+            if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                for (int j = 1; j <=12; j++) {
+                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                }
+            }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
                     rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
@@ -320,6 +370,88 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+    private void getYearAvg(JSONObject e, List<Entry> entries, List<Integer> yearAvg, String activity) {
+        if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[0])) {
+            try {
+                if (e.getJSONObject(activity).getInt("time") != 0) {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                        cal.setTime(cal.getTime());
+                        yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + e.getJSONObject(activity).getInt("time"));
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        } else if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[1])) {
+            try {
+                if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                        cal.setTime(cal.getTime());
+                        double gCO2 = e.getJSONObject(activity).getDouble("distance");
+                        int value = Arrays.asList(Constants.ListModes).indexOf(activity);
+                        gCO2 = gCO2 * (Constants.CO2PerMode[value] / 1000);
+                        if (activity.equals("Foot") || activity.equals("Car") || activity.equals("Bicycle")) {
+                            gCO2 = addOptions(gCO2, activity);
+                        }
+                        yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + (int)gCO2);
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        } else if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
+            try {
+                if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                        cal.setTime(cal.getTime());
+                        yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + (int)((int)e.getJSONObject(activity).getDouble("distance") / 1000f));
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        } else {
+            try {
+                if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                    String test = e.getString("date");
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                    try {
+                        cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
+                        double energyPerMode = e.getJSONObject(activity).getDouble("distance");
+                        int value = Arrays.asList(Constants.ListModes).indexOf(activity);
+                        energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
+                        cal.setTime(cal.getTime());
+                        yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + (int)energyPerMode);
+                    } catch (ParseException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            } catch (JSONException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+    }
+
     private void updateCO2PerMode(List<JSONObject> listJson) {
         int i = 0;
         for (String activity: Constants.ListModes) {
@@ -327,6 +459,10 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 continue;
             }
             List<Entry> entries = new ArrayList<>();
+            List<Integer> yearAvg = new ArrayList<>();
+            for (int j = 0; j < 12; j++) {
+                yearAvg.add(j, 0);
+            }
             listJson.forEach(e -> {
                 try {
                     String test = e.getString("date");
@@ -337,27 +473,38 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     } catch (ParseException ex) {
                         ex.printStackTrace();
                     }
-                    if (e.getJSONObject(activity).getDouble("distance") != 0) {
-                        Date date = cal.getTime();
-                        double gCO2 = e.getJSONObject(activity).getDouble("distance");
-                        int value = Arrays.asList(Constants.ListModes).indexOf(activity);
-                        gCO2 = gCO2 * (Constants.CO2PerMode[value] / 1000);
-                        if (activity.equals("Foot") || activity.equals("Car") || activity.equals("Bicycle")) {
-                            gCO2 = addOptions(gCO2, activity);
-                        }
-                        if (gCO2 >= 1.0) {
-                            entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (int)gCO2, activity));
+
+                    if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                        this.getYearAvg(e, entries, yearAvg, activity);
+                    } else {
+                        if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                            Date date = cal.getTime();
+                            double gCO2 = e.getJSONObject(activity).getDouble("distance");
+                            int value = Arrays.asList(Constants.ListModes).indexOf(activity);
+                            gCO2 = gCO2 * (Constants.CO2PerMode[value] / 1000);
+                            if (activity.equals("Foot") || activity.equals("Car") || activity.equals("Bicycle")) {
+                                gCO2 = addOptions(gCO2, activity);
+                            }
+                            if (gCO2 >= 1.0) {
+                                entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (int)gCO2, activity));
+                            }
                         }
                     }
+
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
             });
 
-            if (entries.isEmpty()) {
+            if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                for (int j = 1; j <=12; j++) {
+                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                }
+            } else if (entries.isEmpty()) {
                 i++;
                 continue;
             }
+
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
                     rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
@@ -445,6 +592,10 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 continue;
             }
             List<Entry> entries = new ArrayList<>();
+            List<Integer> yearAvg = new ArrayList<>();
+            for (int j = 0; j < 12; j++) {
+                yearAvg.add(j, 0);
+            }
             listJson.forEach(e -> {
                 try {
                     String test = e.getString("date");
@@ -455,20 +606,32 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     } catch (ParseException ex) {
                         ex.printStackTrace();
                     }
-                    if (e.getJSONObject(activity).getDouble("distance") >= 10) {
-                        Date date = cal.getTime();
-                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
+
+                    if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                        this.getYearAvg(e, entries, yearAvg, activity);
+                    } else {
+                        if (e.getJSONObject(activity).getDouble("distance") >= 10) {
+                            Date date = cal.getTime();
+                            entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
+                        }
                     }
+
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
             });
+            if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                for (int j = 1; j <=12; j++) {
+                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                }
+            }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
                     rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
                     rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
                     rgb("#D81B60")
             };
+            dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             dataSet.setColor(material_colors[i]);
             dataSet.setCircleRadius(5f);
             dataSet.setCircleColor(material_colors[i]);
@@ -486,6 +649,10 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 continue;
             }
             List<Entry> entries = new ArrayList<>();
+            List<Integer> yearAvg = new ArrayList<>();
+            for (int j = 0; j < 12; j++) {
+                yearAvg.add(j, 0);
+            }
             listJson.forEach(e -> {
                 try {
                     String test = e.getString("date");
@@ -496,20 +663,35 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     } catch (ParseException ex) {
                         ex.printStackTrace();
                     }
-                    if (e.getJSONObject(activity).getInt("time") != 0) {
-                        Date date = cal.getTime();
-                        entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
+
+                    if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                        this.getYearAvg(e, entries, yearAvg, activity);
+                    } else {
+                        if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                            double energyPerMode = e.getJSONObject(activity).getDouble("distance");
+                            int value = Arrays.asList(Constants.ListModes).indexOf(activity);
+                            energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
+                            if (energyPerMode >= 1.0) {
+                                entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)energyPerMode, activity));
+                            }
+                        }
                     }
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
             });
+            if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                for (int j = 1; j <=12; j++) {
+                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                }
+            }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
                     rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
                     rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
                     rgb("#D81B60")
             };
+            dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             dataSet.setColor(material_colors[i]);
             dataSet.setCircleRadius(5f);
             dataSet.setCircleColor(material_colors[i]);

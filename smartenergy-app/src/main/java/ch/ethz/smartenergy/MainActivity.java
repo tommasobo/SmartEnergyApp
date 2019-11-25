@@ -64,7 +64,7 @@ import ch.ethz.smartenergy.service.SensorScanPeriod;
 public class MainActivity extends AppCompatActivity {
 
     private int internalCycle = 1;
-    private int selectedViewGraph = 0;
+    private int selectedViewGraph = 1;
 
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int PERMISSION_ALL = 4242;
