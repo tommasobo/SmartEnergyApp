@@ -16,7 +16,7 @@ public class Constants {
     public static final String MagnReadingExtraName = "MagneticFieldReading";
 
     // General Logic
-    public static final double MaxAvgSpeedStill = 2.0f;
+    public static final double MaxAvgSpeedStill = 2.2f;
     public static final double TopAvgSpeedAllowed = 3.0f;
     public static final double MaxAccStill = 0.6;
     public static final double MaxSpeedStill = 4.0;
@@ -62,7 +62,7 @@ public class Constants {
     public static final String AVERAGE_DIET = "Average";
     public static final String IGNORE_DIET = "Ignore Diet";
 
-    public static final String DEFAULT_CAR = "Default Car";
+    public static final String DEFAULT_CAR = "Average Car";
     public static final String SMALL_CAR = "Small Car";
     public static final String BIG_CAR = "Sport Car";
     public static final String ELECTRIC_CAR = "Electric Car";

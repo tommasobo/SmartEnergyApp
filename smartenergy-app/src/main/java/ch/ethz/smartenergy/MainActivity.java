@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import biz.k11i.xgboost.Predictor;
 import biz.k11i.xgboost.util.FVec;
@@ -89,6 +90,9 @@ public class MainActivity extends AppCompatActivity {
     private String accuracy = "";
     private int latestWiFiNumber = 0;
     private int oldWiFiNumber = -1;
+    private int commonWiFi = 0;
+    private List<String> latestWifiNames = null;
+    private List<String> oldWifiNames = null;
     private Location latestKnownLocation = null;
     private int avgSpeed;
     private int lastGPSUpdate = 0;
@@ -361,13 +365,27 @@ public class MainActivity extends AppCompatActivity {
 
                 if (MainActivity.this.oldWiFiNumber != -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                    MainActivity.this.oldWifiNames = new ArrayList<>();
+                    for (String ele : MainActivity.this.latestWifiNames) {
+                        MainActivity.this.oldWifiNames.add(ele);
+                    }
                 }
                 if (scan.getWifiScans().size() >= 1) {
                     MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
+                    MainActivity.this.latestWifiNames = new ArrayList<>();
+                    scan.getWifiScans().get(0).getDiscoveredDevices().forEach(e ->
+                            MainActivity.this.latestWifiNames.add(e.getSsid()));
                 }
                 if (MainActivity.this.oldWiFiNumber == -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                    MainActivity.this.oldWifiNames = new ArrayList<>();
+                    for (String ele : MainActivity.this.latestWifiNames) {
+                        MainActivity.this.oldWifiNames.add(ele);
+                    }
                 }
+
+                MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
+
                 System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
 
                 boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
@@ -493,7 +511,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateData(boolean isStill, float[] predictionsXGBoost, ArrayList<LocationScan> locationScans) {
-        List<Float> listPredictions = new ArrayList<Float>();
+        List<Float> listPredictions = new ArrayList<>();
+        ArrayList<LocationScan> locationScans2 = new ArrayList<>();
+        for (LocationScan loc : locationScans) {
+            locationScans2.add(loc);
+        }
 
         for (Integer index : this.previousModes) {
             predictions[index] += Constants.BONUS_PREVIOUS;
@@ -502,8 +524,6 @@ public class MainActivity extends AppCompatActivity {
         for (float prediction : predictions) {
             listPredictions.add(prediction);
         }
-
-        isGPSOn(locationScans);
 
         int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
 
@@ -519,8 +539,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         distance += calculateDistance(locationScans,indexMaxMode);
+        isGPSOn(locationScans2);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
 
         if (this.internalCycle == 10) {
 
@@ -552,10 +573,13 @@ public class MainActivity extends AppCompatActivity {
 
         this.gpsOn = false;
         locationScans.forEach(e -> {
-            if (e.getAccuracy() < 1200) {
+            if (e.getAccuracy() < 250) {
                 this.gpsOn = true;
             }
         });
+        if (this.gpsOn) {
+            return;
+        }
 
         if (locationScans.isEmpty()) {
             this.gpsOn = false;
@@ -579,15 +603,26 @@ public class MainActivity extends AppCompatActivity {
                             double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ,
                             double magnitudeMagn, double avgMagnX, double avgMagnY, double avgMagnZ) {
 
-        // build features vector
-        double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
-                            bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
-                            magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
-                            maxSpeed, minSpeed};
-        FVec features_vector = FVec.Transformer.fromArray(features, false);
 
-        //predict
-        float[] predictions = predictor_with_gps.predict(features_vector);
+        float[] predictions;
+        if (this.gpsOn) {
+            // build features vector
+            double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
+                    bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+                    magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
+                    maxSpeed, minSpeed};
+            FVec features_vector = FVec.Transformer.fromArray(features, false);
+            //predict
+            predictions = predictor_with_gps.predict(features_vector);
+        } else {
+            // build features vector
+            double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
+                    bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+                    magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ};
+            FVec features_vector = FVec.Transformer.fromArray(features, false);
+            //predict
+            predictions = predictor_without_gps.predict(features_vector);
+        }
 
         this.predictions = predictions;
         return predictions;
@@ -602,13 +637,35 @@ public class MainActivity extends AppCompatActivity {
 
         // Case where no GPS detected
         if (!this.gpsOn) {
-            //
+            if (meanMagnitude <= 0.20) {
+                points += 0.80f;
+            } else if (meanMagnitude <= 0.45 && meanMagnitude > 0.20) {
+                points += 0.50f;
+            }
+
+            if (this.latestWiFiNumber >= 3) {
+                float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
+                if (this.latestWiFiNumber == this.commonWiFi) {
+                    points += 0.70f;
+                } else {
+                    if (percent <= 0.10f) {
+                        points += 0.50f;
+                    }
+                    if (percent <= 0.25f && percent > 0.10f) {
+                        points += 0.30f;
+                    }
+                }
+            } else {
+                points += 0.30f;
+            }
+
+            return points >= 0.79f;
         }
 
         // Wifi numbers
         if (this.latestWiFiNumber >= 3) {
-            float percent = Math.abs(1f - ((float)this.oldWiFiNumber / (float)this.latestWiFiNumber));
-            if (this.latestWiFiNumber == this.oldWiFiNumber) {
+            float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
+            if (this.latestWiFiNumber == this.commonWiFi) {
                 points += 0.70f;
             } else {
                 if (percent <= 0.10f) {
@@ -624,7 +681,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (meanMagnitude <= 0.20) {
             points += 0.50f;
-        } else if (meanMagnitude <= 0.40 && meanMagnitude > 0.20) {
+        } else if (meanMagnitude <= 0.45 && meanMagnitude > 0.20) {
             points += 0.30f;
         }
 
