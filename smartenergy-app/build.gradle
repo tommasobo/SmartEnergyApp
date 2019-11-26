@@ -48,6 +48,7 @@ dependencies {
     implementation 'com.github.jeuler:android-segmented:1.0.8'
     implementation 'de.hdodenhof:circleimageview:2.2.0'
     implementation 'com.github.devsideal:VectorChildFinder:1.0.0'
+    implementation 'com.github.xizzhu:simple-tool-tip:0.7.0'
 
 
     testImplementation 'junit:junit:4.12'

@@ -24,8 +24,8 @@
     <string name="home">Home</string>
     <string-array name="list_options">
         <item>Past Week</item>
-        <item>Current Month</item>
-        <item>Current Year</item>
+        <item>This Month</item>
+        <item>This Year</item>
     </string-array>
     <string-array name="list_diet">
         <item>Ignore Diet</item>

@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
-import android.content.res.AssetFileDescriptor;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,8 +43,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,11 +50,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import biz.k11i.xgboost.Predictor;
 import biz.k11i.xgboost.util.FVec;
@@ -72,7 +65,7 @@ import ch.ethz.smartenergy.service.SensorScanPeriod;
 public class MainActivity extends AppCompatActivity {
 
     private int internalCycle = 1;
-    private int selectedViewGraph = 0;
+    private int selectedViewGraph = 1;
 
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int PERMISSION_ALL = 4242;
@@ -97,6 +90,9 @@ public class MainActivity extends AppCompatActivity {
     private String accuracy = "";
     private int latestWiFiNumber = 0;
     private int oldWiFiNumber = -1;
+    private int commonWiFi = 0;
+    private List<String> latestWifiNames = null;
+    private List<String> oldWifiNames = null;
     private Location latestKnownLocation = null;
     private int avgSpeed;
     private int lastGPSUpdate = 0;
@@ -303,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
-                    this.mostPresentPersistent.put(key, temp + 2);
+                    this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     double d = activity.getJSONObject(key).getDouble("distance");
                     activity.getJSONObject(key).put("distance", d + distance);
@@ -323,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Integer temp = this.mostPresentPersistent.get(key);
                 if (temp != null) {
-                    this.mostPresentPersistent.put(key, temp + 2);
+                    this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
                     activity.getJSONObject(key).put("distance", distance);
                 }
@@ -355,25 +351,41 @@ public class MainActivity extends AppCompatActivity {
             if (scan != null) {
 
 
+                // TODO: these calculations are responsible for the lag
                 double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings(), true);
-                double minAcc = calculateMinAcc(scan.getAccReadings());
-                double maxAcc = calculateMaxAcc(scan.getAccReadings());
+//                double minAcc = calculateMinAcc(scan.getAccReadings());
+//                double maxAcc = calculateMaxAcc(scan.getAccReadings());
                 double maxSpeed = calculateMaxSpead(scan.getLocationScans());
                 double avgSpeed = calculateAvgSpeed(scan.getLocationScans());
                 double minSpeed = calculateMinSpead(scan.getLocationScans());
                 double accuracyGPS = calculateAccuracy(scan.getLocationScans());
-                double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
-                double gyroMin = calculateMinGyro(scan.getGyroReadings());
-                double gyroMax = calculateMaxGyro(scan.getGyroReadings());
+//                double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
+//                double gyroMin = calculateMinGyro(scan.getGyroReadings());
+//                double gyroMax = calculateMaxGyro(scan.getGyroReadings());
+
                 if (MainActivity.this.oldWiFiNumber != -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                    MainActivity.this.oldWifiNames = new ArrayList<>();
+                    for (String ele : MainActivity.this.latestWifiNames) {
+                        MainActivity.this.oldWifiNames.add(ele);
+                    }
                 }
                 if (scan.getWifiScans().size() >= 1) {
                     MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
+                    MainActivity.this.latestWifiNames = new ArrayList<>();
+                    scan.getWifiScans().get(0).getDiscoveredDevices().forEach(e ->
+                            MainActivity.this.latestWifiNames.add(e.getSsid()));
                 }
                 if (MainActivity.this.oldWiFiNumber == -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
+                    MainActivity.this.oldWifiNames = new ArrayList<>();
+                    for (String ele : MainActivity.this.latestWifiNames) {
+                        MainActivity.this.oldWifiNames.add(ele);
+                    }
                 }
+
+                MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
+
                 System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
 
                 boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
@@ -384,30 +396,37 @@ public class MainActivity extends AppCompatActivity {
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
 
-                Callable<float[]> callablePrediction = () -> {
-                    float[] predictionsXGBoost = predict(
-                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
-                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
-                            bluetoothNumber,
-                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
-                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
-                    return predictionsXGBoost;
-                };
+//                Callable<float[]> callablePrediction = () -> {
+//                    float[] predictionsXGBoost = predict(
+//                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+//                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+//                            bluetoothNumber,
+//                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+//                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
+//                    return predictionsXGBoost;
+//                };
+//
+//                ExecutorService executor = Executors.newFixedThreadPool(1);
+//                Future<float[]> future = executor.submit(callablePrediction);
+//
+//
+//                float[] predictionsXGBoost = new float[0];
+//                try {
+//                    predictionsXGBoost = future.get();
+//                } catch (ExecutionException e) {
+//                    e.printStackTrace();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
 
-                ExecutorService executor = Executors.newFixedThreadPool(1);
-                Future<float[]> future = executor.submit(callablePrediction);
+                float[] predictionsXGBoost = predict(
+                        meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+                        maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+                        bluetoothNumber,
+                        calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+                        calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
 
-
-                float[] predictionsXGBoost = new float[0];
-                try {
-                    predictionsXGBoost = future.get();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                //predict_NN(scan.getAccReadings());
+//                predict_NN(scan.getAccReadings());
 
                 updateData(isStill, predictionsXGBoost, scan.getLocationScans());
 
@@ -443,55 +462,6 @@ public class MainActivity extends AppCompatActivity {
 
         this.previousBlueNumbers = (int)listBluetooth.stream().distinct().count();
         return (int)listBluetooth.stream().distinct().count();
-    }
-
-    private double calculateMinGyro(ArrayList<SensorReading> gyroReadings) {
-        if (gyroReadings.size() == 0) return 0;
-        List<Double> listMagnitudes = new ArrayList<>();
-
-        for (SensorReading reading : gyroReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            listMagnitudes.add(Math.sqrt(sumOfPows));
-        }
-
-        return listMagnitudes.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
-    }
-
-    private double calculateMaxGyro(ArrayList<SensorReading> gyroReadings) {
-        if (gyroReadings.size() == 0) return 0;
-        List<Double> listMagnitudes = new ArrayList<>();
-
-        for (SensorReading reading : gyroReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            listMagnitudes.add(Math.sqrt(sumOfPows));
-        }
-
-        return listMagnitudes.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
-    }
-
-    private double calculateAvgGyro(ArrayList<SensorReading> gyroReadings) {
-        if (gyroReadings.size() == 0) return 0;
-
-        double sumOfMagnitudes = 0;
-
-        for (SensorReading reading : gyroReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            sumOfMagnitudes += Math.sqrt(sumOfPows);
-        }
-
-        return sumOfMagnitudes / gyroReadings.size();
     }
 
     private double calculateMinAcc(ArrayList<SensorReading> accReadings) {
@@ -541,7 +511,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateData(boolean isStill, float[] predictionsXGBoost, ArrayList<LocationScan> locationScans) {
-        List<Float> listPredictions = new ArrayList<Float>();
+        List<Float> listPredictions = new ArrayList<>();
+        ArrayList<LocationScan> locationScans2 = new ArrayList<>();
+        for (LocationScan loc : locationScans) {
+            locationScans2.add(loc);
+        }
 
         for (Integer index : this.previousModes) {
             predictions[index] += Constants.BONUS_PREVIOUS;
@@ -550,8 +524,6 @@ public class MainActivity extends AppCompatActivity {
         for (float prediction : predictions) {
             listPredictions.add(prediction);
         }
-
-        isGPSOn(locationScans);
 
         int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
 
@@ -567,10 +539,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         distance += calculateDistance(locationScans,indexMaxMode);
+        isGPSOn(locationScans2);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
 
-        if (this.internalCycle == 12) {
+        if (this.internalCycle == 10) {
 
             String key = Collections.max(this.mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey();
             boolean isNotStill;
@@ -592,7 +565,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
     private void isGPSOn(ArrayList<LocationScan> locationScans) {
         if (locationScans == null || locationScans.isEmpty()) {
             this.gpsOn = false;
@@ -601,10 +573,13 @@ public class MainActivity extends AppCompatActivity {
 
         this.gpsOn = false;
         locationScans.forEach(e -> {
-            if (e.getAccuracy() < 1200) {
+            if (e.getAccuracy() < 250) {
                 this.gpsOn = true;
             }
         });
+        if (this.gpsOn) {
+            return;
+        }
 
         if (locationScans.isEmpty()) {
             this.gpsOn = false;
@@ -628,15 +603,26 @@ public class MainActivity extends AppCompatActivity {
                             double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ,
                             double magnitudeMagn, double avgMagnX, double avgMagnY, double avgMagnZ) {
 
-        // build features vector
-        double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
-                            bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
-                            magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
-                            maxSpeed, minSpeed};
-        FVec features_vector = FVec.Transformer.fromArray(features, false);
 
-        //predict
-        float[] predictions = predictor_with_gps.predict(features_vector);
+        float[] predictions;
+        if (this.gpsOn) {
+            // build features vector
+            double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
+                    bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+                    magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
+                    maxSpeed, minSpeed};
+            FVec features_vector = FVec.Transformer.fromArray(features, false);
+            //predict
+            predictions = predictor_with_gps.predict(features_vector);
+        } else {
+            // build features vector
+            double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
+                    bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+                    magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ};
+            FVec features_vector = FVec.Transformer.fromArray(features, false);
+            //predict
+            predictions = predictor_without_gps.predict(features_vector);
+        }
 
         this.predictions = predictions;
         return predictions;
@@ -651,13 +637,35 @@ public class MainActivity extends AppCompatActivity {
 
         // Case where no GPS detected
         if (!this.gpsOn) {
-            //
+            if (meanMagnitude <= 0.20) {
+                points += 0.80f;
+            } else if (meanMagnitude <= 0.45 && meanMagnitude > 0.20) {
+                points += 0.50f;
+            }
+
+            if (this.latestWiFiNumber >= 3) {
+                float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
+                if (this.latestWiFiNumber == this.commonWiFi) {
+                    points += 0.70f;
+                } else {
+                    if (percent <= 0.10f) {
+                        points += 0.50f;
+                    }
+                    if (percent <= 0.25f && percent > 0.10f) {
+                        points += 0.30f;
+                    }
+                }
+            } else {
+                points += 0.30f;
+            }
+
+            return points >= 0.79f;
         }
 
         // Wifi numbers
         if (this.latestWiFiNumber >= 3) {
-            float percent = Math.abs(1f - ((float)this.oldWiFiNumber / (float)this.latestWiFiNumber));
-            if (this.latestWiFiNumber == this.oldWiFiNumber) {
+            float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
+            if (this.latestWiFiNumber == this.commonWiFi) {
                 points += 0.70f;
             } else {
                 if (percent <= 0.10f) {
@@ -668,6 +676,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         } else {
+            points += 0.30f;
+        }
+
+        if (meanMagnitude <= 0.20) {
+            points += 0.50f;
+        } else if (meanMagnitude <= 0.45 && meanMagnitude > 0.20) {
             points += 0.30f;
         }
 
@@ -763,17 +777,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (isAcc) this.meanAcc = sumOfMagnitudes / accReadings.size();; // Remove this
         return sumOfMagnitudes / accReadings.size();
-    }
-
-    private MappedByteBuffer loadModelFile(Context context, String fileName) throws IOException {
-
-        AssetFileDescriptor fileDescriptor = context.getAssets().openFd("example_nn.tflite");
-        FileInputStream inputStream = fileDescriptor.createInputStream();
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-
     }
 
     /**
@@ -908,7 +911,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             this.startService(serviceIntent);
         }
-
     }
 
     public void rightClickTopBar(View view) {
@@ -976,10 +978,6 @@ public class MainActivity extends AppCompatActivity {
         return file.exists();
     }
 
-    public float[] getPredictions() {
-        return predictions;
-    }
-
     public Fragment getHomeFragment() {
         return homeFragment;
     }
@@ -987,8 +985,6 @@ public class MainActivity extends AppCompatActivity {
     public Fragment getStatsFragment() {
         return statsFragment;
     }
-
-
 
 }
 

@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.method.ScrollingMovementMethod;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,10 +12,16 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.TooltipCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import com.github.xizzhu.simpletooltip.ToolTip;
+import com.github.xizzhu.simpletooltip.ToolTipView;
 
 public class SettingsFragment extends Fragment {
 
@@ -29,8 +36,43 @@ public class SettingsFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
-        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_diet), "This is a tooltip");
-        TooltipCompat.setTooltipText(getView().findViewById(R.id.button_info_car), "This is a tooltip");
+        getView().findViewById(R.id.button_info_diet).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ToolTip toolTip = new ToolTip.Builder()
+                        .withText("Choose diet to count emissions \n for walking and bicycle. \n If ignored they will be zero.")
+                        .withTextSize(35)
+                        .withPadding(10,10,10,10)
+                        .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))
+                        .build();
+                ToolTipView toolTipView = new ToolTipView.Builder(getContext())
+                        .withAnchor(v)
+                        .withToolTip(toolTip)
+                        .withGravity(Gravity.RIGHT)
+                        .build();
+                toolTipView.show();
+            }
+        });
+
+        getView().findViewById(R.id.button_info_car).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ToolTip toolTip = new ToolTip.Builder()
+                        .withText("Choose the car you own \n to make calculations \n more precise")
+                        .withTextSize(35)
+                        .withPadding(10,10,10,10)
+                        .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))
+                        .build();
+                ToolTipView toolTipView = new ToolTipView.Builder(getContext())
+                        .withAnchor(v)
+                        .withToolTip(toolTip)
+                        .withGravity(Gravity.RIGHT)
+                        .build();
+                toolTipView.show();
+            }
+        });
+
+
         RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());

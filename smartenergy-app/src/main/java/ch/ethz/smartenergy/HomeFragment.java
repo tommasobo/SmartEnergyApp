@@ -58,7 +58,7 @@ public class HomeFragment extends Fragment {
 
     private List<PieEntry> pieChartEntries;
     private List<Integer> colorEntries;
-    private String selectedGraphName = Constants.MENU_OPTIONS[0];
+    private String selectedGraphName = Constants.MENU_OPTIONS[1];
 
 
     @Override
@@ -274,9 +274,9 @@ public class HomeFragment extends Fragment {
     private void updateDistancePerMode(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
-            /*if (activity.equals("Still")) {
+            if (activity.equals("Still")) {
                 continue;
-            }*/
+            }
             try {
                 if (todayData.getJSONObject(activity).getDouble("distance") >= 10.0) {
                     pieChartEntries.add(new PieEntry((float)(todayData.getJSONObject(activity).getDouble("distance") / 1000), activity));
@@ -406,10 +406,10 @@ public class HomeFragment extends Fragment {
         return (value / (double) total) * 100;
     }
 
-    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy, int latestWiFiNumber, int oldWifi, int avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc) {
+    void updateIcons(Map<String, Integer> mostPresentWindow, String accuracy, int latestWiFiNumber, int oldWifi, int avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions) {
 
         TextView t = getView().findViewById(R.id.accuracyText);
-        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldVsNew): " + latestWiFiNumber + " " + oldWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers + " Mean Acc: " +  String.format(Locale.ENGLISH, "%.4f", meanAcc);
+        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldVsNew): " + latestWiFiNumber + " " + oldWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers + " Mean Acc: " +  String.format(Locale.ENGLISH, "%.4f", meanAcc) + " Pred: " + Arrays.toString(predictions);
         t.setText(s);
 
         for (String activity : Constants.ListModes) {

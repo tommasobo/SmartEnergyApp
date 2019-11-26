@@ -16,7 +16,7 @@ public class Constants {
     public static final String MagnReadingExtraName = "MagneticFieldReading";
 
     // General Logic
-    public static final double MaxAvgSpeedStill = 2.0f;
+    public static final double MaxAvgSpeedStill = 2.2f;
     public static final double TopAvgSpeedAllowed = 3.0f;
     public static final double MaxAccStill = 0.6;
     public static final double MaxSpeedStill = 4.0;
@@ -47,10 +47,11 @@ public class Constants {
     public static final String TAG_FRAGMENT_STATS = "fragment_stats";
     public static final String TAG_FRAGMENT_SETTINGS = "fragment_settings";
     public static final String TAG_FRAGMENT_ONBOARDING = "fragment_onboarding";
+    public static final String[] TIMEFRAME_OPTIONS = {"Past Week", "This Month", "This Year"};
     public static final String[] MENU_OPTIONS = {"Time per Mode", "CO₂ per Mode", "Distance per Mode", "Energy per Mode"};
     public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Transportation For Today",
             "CO₂ (g) Per Transportation For Today", "Distance (km) Per Transportation For Today", "Energy (Wh) Per Transportation For Today"};
-    public static final String[] GRAPH_DESCRIPTION = {"Minutes Per Transportation Mode for", "CO₂ (g) Per Transportation Mode for", "Distance (m) per Mode", "Energy (Wh) per Mode"};
+    public static final String[] GRAPH_DESCRIPTION = {"Minutes Per Transportation Mode for", "CO₂ (g) Per Transportation Mode for", "Distance (km) per Mode for", "Energy (Wh) per Mode for"};
     public static final int[] MATERIAL_COLORS = {
             rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
             rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
@@ -61,11 +62,12 @@ public class Constants {
     public static final String AVERAGE_DIET = "Average";
     public static final String IGNORE_DIET = "Ignore Diet";
 
-    public static final String DEFAULT_CAR = "Default Car";
+    public static final String DEFAULT_CAR = "Average Car";
     public static final String SMALL_CAR = "Small Car";
     public static final String BIG_CAR = "Sport Car";
     public static final String ELECTRIC_CAR = "Electric Car";
     public static final int MINUTES_WITHOUT_GPS = 23; // Equals two minutes
+
 
     private static int rgb(String hex) {
         int color = (int) Long.parseLong(hex.replace("#", ""), 16);
