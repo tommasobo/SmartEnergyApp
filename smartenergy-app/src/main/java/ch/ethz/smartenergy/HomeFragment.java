@@ -303,7 +303,7 @@ public class HomeFragment extends Fragment {
             try {
                 if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
                     double energyPerMode = todayData.getJSONObject(activity).getDouble("distance");
-                    energyPerMode = energyPerMode * (Constants.WattPerMode[i]);
+                    energyPerMode = energyPerMode * (Constants.WattPerMode[i]) / 1000;
                     if (energyPerMode >= 1.0) {
                         pieChartEntries.add(new PieEntry((int) energyPerMode, activity));
                         colorEntries.add(Constants.MATERIAL_COLORS[i]);

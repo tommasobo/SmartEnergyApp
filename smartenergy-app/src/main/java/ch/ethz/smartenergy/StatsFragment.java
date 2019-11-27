@@ -457,7 +457,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         cal.setTime(Objects.requireNonNull(sdf.parse(test)));// all done
                         double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                         int value = Arrays.asList(Constants.ListModes).indexOf(activity);
-                        energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
+                        energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
                         cal.setTime(cal.getTime());
                         yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + (int)energyPerMode);
                     } catch (ParseException ex) {
@@ -468,7 +468,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 ex.printStackTrace();
             }
         }
-
     }
 
     private void updateCO2PerMode(List<JSONObject> listJson) {
@@ -708,14 +707,14 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         if (e.getJSONObject(activity).getDouble("distance") != 0 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
                             double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
-                            energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
+                            energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
                             if (energyPerMode >= 1.0) {
                                 entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)energyPerMode, activity));
                             }
                         } else if (e.getJSONObject(activity).getDouble("distance") != 0 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
                             double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
-                            energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
+                            energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
                             if (energyPerMode >= 1.0) {
                                 entries.add(new Entry(this.lastWeekItems.get(runCount.get()), (float)energyPerMode, activity));
                             }
