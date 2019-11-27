@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class StatsFragment extends Fragment implements AdapterView.OnItemSelectedListener {
 
@@ -55,7 +56,8 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
     private LineData lineData;
     private List<Integer> colorEntries;
     private LineChart chart;
-    private String selectedTimeFrame = Constants.TIMEFRAME_OPTIONS[1];
+    private String selectedTimeFrame = Constants.TIMEFRAME_OPTIONS[0];
+    private List<Integer> lastWeekItems;
 
     @Nullable
     @Override
@@ -74,7 +76,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 R.array.list_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        spinner.setSelection(adapter.getPosition("This Month"));
+        spinner.setSelection(adapter.getPosition("Past Month"));
         spinner.setOnItemSelectedListener(this);
 
         updateChart();
@@ -156,6 +158,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
     private List<JSONObject> getJsonPastWeek(JSONObject json) {
         List<JSONObject> listJson = new ArrayList<>();
+        this.lastWeekItems = new ArrayList<>();
         for (int i = 6; i >= 0; i--) {
             Iterator <?> keys = json.keys();
             while (keys.hasNext()) {
@@ -177,6 +180,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                             out[1].equals(String.valueOf(calendar.get(Calendar.MONTH) + 1)) &&
                             out[2].equals(String.valueOf(calendar.get(Calendar.YEAR)))) {
                             listJson.add(tempJson);
+                            this.lastWeekItems.add(Math.abs(i-6));
                         }
                     }
                 } catch (JSONException e) {
@@ -205,6 +209,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             Log.d("Error", err.toString());
         }
 
+        TextView tvDesc = getView().findViewById(R.id.textDescription);
+        String s = Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + getTitleGraph();
+        tvDesc.setText(s);
         List<JSONObject> listJson = null;
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
             listJson = getJsonPastWeek(json);
@@ -231,9 +238,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
     private void setChartUI(List<JSONObject> listJson) {
         Calendar cal = Calendar.getInstance();
-        TextView tvDesc = getView().findViewById(R.id.textDescription);
-        String s = Constants.GRAPH_DESCRIPTION[Arrays.asList(Constants.MENU_OPTIONS).indexOf(this.selectedGraphName)] + " " + getTitleGraph();
-        tvDesc.setText(s);
         chart.setData(lineData);
         if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
             chart.getData().setValueFormatter(new ValueFormatter() {
@@ -270,31 +274,38 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
             xAxis.setValueFormatter(new YearViewFormatter());
+        } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])){
+            xAxis.setValueFormatter(new WeekViewFormatter());
         } else {
             xAxis.setValueFormatter(new MonthViewFormatter());
         }
         boolean forceLabelCount = false;
+
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
-            chart.getXAxis().setLabelCount(7, false);
-            chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
-            chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
-        } else {
             if (lineData.getXMin() != lineData.getXMax()) {
-                chart.getXAxis().setAxisMinimum(getMinXAxisPerMonth(lineData.getXMin()));
-                chart.getXAxis().setAxisMaximum(getMaxXAxisPerMonth(lineData.getXMax()));
+                chart.getXAxis().setAxisMinimum(0);
+                chart.getXAxis().setAxisMaximum(6);
+                chart.getXAxis().setLabelCount(7, true);
             }
-            if (getLabelNumberForMonth(listJson.size()) > 3) {
-                forceLabelCount = true;
+        } else {
+            if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
+                chart.getXAxis().setAxisMinimum(1);
+                int maxMonth = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH);
+                chart.getXAxis().setAxisMaximum(maxMonth);
             }
+
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
+                chart.getXAxis().setAxisMinimum(1);
+                chart.getXAxis().setAxisMaximum(12);
                 chart.getXAxis().setLabelCount(12, true);
-            } else {
-                chart.getXAxis().setLabelCount(getLabelNumberForMonth(listJson.size()), forceLabelCount);
             }
         }
         chart.getXAxis().setGranularityEnabled(true);
         chart.getXAxis().setCenterAxisLabels(false);
+        chart.getXAxis().setSpaceMax(0.0f);
+        chart.getXAxis().setSpaceMin(0.0f);
         chart.getXAxis().setAxisLineWidth(1.2f);
+        chart.getXAxis().setAvoidFirstLastClipping(false);
         chart.getXAxis().setDrawGridLines(false);
     }
 
@@ -325,6 +336,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 yearAvg.add(j, 0);
             }
             List<Entry> entries = new ArrayList<>();
+            AtomicInteger runCount = new AtomicInteger(0);
             listJson.forEach(e -> {
                 try {
                     String test = e.getString("date");
@@ -337,20 +349,29 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     }
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                         this.getYearAvg(e, entries, yearAvg, activity);
-                    } else {
+                    } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])){
                         if (e.getJSONObject(activity).getInt("time") != 0) {
                             Date date = cal.getTime();
                             entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
+                        }
+                    } else {
+                        if (e.getJSONObject(activity).getInt("time") != 0) {
+                            Date date = cal.getTime();
+                            entries.add(new Entry(this.lastWeekItems.get(runCount.get()), e.getJSONObject(activity).getInt("time"), activity));
                         }
                     }
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
+                runCount.incrementAndGet();
             });
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
                     entries.add(new Entry(j, yearAvg.get(j - 1)));
                 }
+            } else if (entries.isEmpty()) {
+                i++;
+                continue;
             }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
@@ -460,6 +481,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             }
             List<Entry> entries = new ArrayList<>();
             List<Integer> yearAvg = new ArrayList<>();
+            AtomicInteger runCount = new AtomicInteger(0);
             for (int j = 0; j < 12; j++) {
                 yearAvg.add(j, 0);
             }
@@ -485,8 +507,10 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                             if (activity.equals("Foot") || activity.equals("Car") || activity.equals("Bicycle")) {
                                 gCO2 = addOptions(gCO2, activity);
                             }
-                            if (gCO2 >= 1.0) {
+                            if (gCO2 >= 1.0 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
                                 entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (int)gCO2, activity));
+                            } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
+                                entries.add(new Entry(this.lastWeekItems.get(runCount.get()), (int)gCO2, activity));
                             }
                         }
                     }
@@ -494,6 +518,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
+                runCount.incrementAndGet();
             });
 
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
@@ -593,6 +618,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             }
             List<Entry> entries = new ArrayList<>();
             List<Integer> yearAvg = new ArrayList<>();
+            AtomicInteger runCount = new AtomicInteger(0);
             for (int j = 0; j < 12; j++) {
                 yearAvg.add(j, 0);
             }
@@ -610,20 +636,33 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                         this.getYearAvg(e, entries, yearAvg, activity);
                     } else {
-                        if (e.getJSONObject(activity).getDouble("distance") >= 10) {
+                        if (e.getJSONObject(activity).getDouble("distance") >= 10 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
                             Date date = cal.getTime();
-                            entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
+                            if (e.getJSONObject(activity).getDouble("distance") >= 10) {
+                                entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
+                            }
+
+                        } else if (e.getJSONObject(activity).getDouble("distance") >= 10 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
+                            Date date = cal.getTime();
+                            if (e.getJSONObject(activity).getDouble("distance") >= 10) {
+                                entries.add(new Entry(this.lastWeekItems.get(runCount.get()), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
+                            }
+
                         }
                     }
 
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
+                runCount.incrementAndGet();
             });
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
                     entries.add(new Entry(j, yearAvg.get(j - 1)));
                 }
+            } else if (entries.isEmpty()) {
+                i++;
+                continue;
             }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
@@ -650,6 +689,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             }
             List<Entry> entries = new ArrayList<>();
             List<Integer> yearAvg = new ArrayList<>();
+            AtomicInteger runCount = new AtomicInteger(0);
             for (int j = 0; j < 12; j++) {
                 yearAvg.add(j, 0);
             }
@@ -667,23 +707,35 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                         this.getYearAvg(e, entries, yearAvg, activity);
                     } else {
-                        if (e.getJSONObject(activity).getDouble("distance") != 0) {
+                        if (e.getJSONObject(activity).getDouble("distance") != 0 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
                             double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                             energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
                             if (energyPerMode >= 1.0) {
                                 entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)energyPerMode, activity));
                             }
+                        } else if (e.getJSONObject(activity).getDouble("distance") != 0 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
+                            double energyPerMode = e.getJSONObject(activity).getDouble("distance");
+                            int value = Arrays.asList(Constants.ListModes).indexOf(activity);
+                            energyPerMode = energyPerMode * (Constants.WattPerMode[value]);
+                            if (energyPerMode >= 1.0) {
+                                entries.add(new Entry(this.lastWeekItems.get(runCount.get()), (float)energyPerMode, activity));
+                            }
                         }
                     }
+
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
+                runCount.incrementAndGet();
             });
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
                     entries.add(new Entry(j, yearAvg.get(j - 1)));
                 }
+            } else if (entries.isEmpty()) {
+                i++;
+                continue;
             }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
