@@ -282,16 +282,15 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         boolean forceLabelCount = false;
 
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
-            if (lineData.getXMin() != lineData.getXMax()) {
-                chart.getXAxis().setAxisMinimum(0);
-                chart.getXAxis().setAxisMaximum(6);
-                chart.getXAxis().setLabelCount(7, true);
-            }
+            chart.getXAxis().setAxisMinimum(0);
+            chart.getXAxis().setAxisMaximum(6);
+            chart.getXAxis().setLabelCount(7, true);
         } else {
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
                 chart.getXAxis().setAxisMinimum(1);
                 int maxMonth = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH);
                 chart.getXAxis().setAxisMaximum(maxMonth);
+                chart.getXAxis().setLabelCount(7, true);
             }
 
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
@@ -305,7 +304,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         chart.getXAxis().setSpaceMax(0.0f);
         chart.getXAxis().setSpaceMin(0.0f);
         chart.getXAxis().setAxisLineWidth(1.2f);
-        chart.getXAxis().setAvoidFirstLastClipping(false);
         chart.getXAxis().setDrawGridLines(false);
     }
 
