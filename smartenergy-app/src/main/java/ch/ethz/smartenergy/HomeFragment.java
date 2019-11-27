@@ -82,6 +82,11 @@ public class HomeFragment extends Fragment {
         textSwitcher.setCurrentText("not collecting any data");
         button = v.findViewById(R.id.button_start);
 
+        if(mainActivity.isScanning()){
+            button.setEnabled(false);
+            button.setText(R.string.start_scanning_on_click);
+        }
+
         this.listIcons = new ArrayList<>();
         for (int i = 0; i < Constants.ListModes.length; i++) {
             int resID = getResources().getIdentifier("iconMode" + i, "id", getActivity().getPackageName());
