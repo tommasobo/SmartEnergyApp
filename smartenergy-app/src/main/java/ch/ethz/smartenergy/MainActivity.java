@@ -367,8 +367,10 @@ public class MainActivity extends AppCompatActivity {
                 if (MainActivity.this.oldWiFiNumber != -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                     MainActivity.this.oldWifiNames = new ArrayList<>();
-                    for (String ele : MainActivity.this.latestWifiNames) {
-                        MainActivity.this.oldWifiNames.add(ele);
+                    if (MainActivity.this.latestWifiNames != null) {
+                        for (String ele : MainActivity.this.latestWifiNames) {
+                            MainActivity.this.oldWifiNames.add(ele);
+                        }
                     }
                 }
                 if (scan.getWifiScans().size() >= 1) {
