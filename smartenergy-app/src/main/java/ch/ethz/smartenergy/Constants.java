@@ -26,20 +26,26 @@ public class Constants {
 
     // Emission Logic
     public static final double[] CO2PerMode = {20.0, 31.375, 72.116, 120.0, 22.45, 10.0, 3.3, 72.0, 0.0};
-    public static final double[] WattPerMode = {59.2, 272.0, 273.0, 455.8, 70.0, 32.2, 8.75, 270.0, 0.0};
+    public static final double[] WattPerMode = {59.2, 272.0, 273.0, 400.0, 70.0, 32.2, 8.75, 270.0, 0.0};
     public static final double co2MultiplierDefaultCar = 1.55;
     public static final double co2MultiplierSmallCar = 1;
     public static final double co2MultiplierBigCar = 1.98;
     public static final double co2MultiplierElectricCar = 0.59;
 
-    public static final double co2MultiplierMeatDietWalking = 11.5;
-    public static final double co2MultiplierMeatDietBicylce = 11.5;
+    public static final double co2MultiplierMeatDietWalking = 12.5;
+    public static final double co2MultiplierMeatDietBicylce = 12.5;
     public static final double co2MultiplierVeganDietWalking = 1.0;
     public static final double co2MultiplierVeganDietBicycle = 1.0;
-    public static final double co2MultiplierAverageDietWalking = 5.0;
-    public static final double co2MultiplierAverageDietBicycle = 5.0;
+    public static final double co2MultiplierAverageDietWalking = 5;
+    public static final double co2MultiplierAverageDietBicycle = 5;
     public static final double co2MultiplierNoDietWalking = 0.0;
     public static final double co2MultiplierNoDietBicycle = 0.0;
+
+    public static final double energyMultiplierDefaultCar = 1.55;
+    public static final double energyMultiplierSmallCar = 1;
+    public static final double energyMultiplierBigCar = 1.98;
+    public static final double energyMultiplierElectricCar = 0.47;
+
 
     // UI
     public static final String[] listModesVerbose = {"on foot", "in a train", "on a bus", "in a car", "in a tram", "on a bicycle", "on a e-bike", "riding a bike", "not doing much"};
