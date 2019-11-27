@@ -380,12 +380,13 @@ public class MainActivity extends AppCompatActivity {
                 if (MainActivity.this.oldWiFiNumber == -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                     MainActivity.this.oldWifiNames = new ArrayList<>();
-                    for (String ele : MainActivity.this.latestWifiNames) {
-                        MainActivity.this.oldWifiNames.add(ele);
+                    if (MainActivity.this.latestWifiNames != null) {
+                        for (String ele : MainActivity.this.latestWifiNames) {
+                            MainActivity.this.oldWifiNames.add(ele);
+                        }
+                        MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
                     }
                 }
-
-                MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
 
                 System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
 
