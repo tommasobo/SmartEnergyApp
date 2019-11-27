@@ -350,8 +350,6 @@ public class MainActivity extends AppCompatActivity {
             ScanResult scan = (ScanResult) data.getSerializable(Constants.WindowBroadcastExtraName);
             if (scan != null) {
 
-
-                // TODO: these calculations are responsible for the lag
                 double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings(), true);
 //                double minAcc = calculateMinAcc(scan.getAccReadings());
 //                double maxAcc = calculateMaxAcc(scan.getAccReadings());
@@ -396,37 +394,12 @@ public class MainActivity extends AppCompatActivity {
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
 
-//                Callable<float[]> callablePrediction = () -> {
-//                    float[] predictionsXGBoost = predict(
-//                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
-//                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
-//                            bluetoothNumber,
-//                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
-//                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
-//                    return predictionsXGBoost;
-//                };
-//
-//                ExecutorService executor = Executors.newFixedThreadPool(1);
-//                Future<float[]> future = executor.submit(callablePrediction);
-//
-//
-//                float[] predictionsXGBoost = new float[0];
-//                try {
-//                    predictionsXGBoost = future.get();
-//                } catch (ExecutionException e) {
-//                    e.printStackTrace();
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-
                 float[] predictionsXGBoost = predict(
                         meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
                         maxSpeed, minSpeed, avgSpeed, accuracyGPS,
                         bluetoothNumber,
                         calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
                         calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
-
-//                predict_NN(scan.getAccReadings());
 
                 updateData(isStill, predictionsXGBoost, scan.getLocationScans());
 
@@ -541,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
         distance += calculateDistance(locationScans,indexMaxMode);
         isGPSOn(locationScans2);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, (int)convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
 
         if (this.internalCycle == 10) {
 
@@ -637,17 +610,17 @@ public class MainActivity extends AppCompatActivity {
 
         // Case where no GPS detected
         if (!this.gpsOn) {
-            if (meanMagnitude <= 0.20) {
+            if (meanMagnitude <= 0.40) {
                 points += 0.80f;
-            } else if (meanMagnitude <= 0.45 && meanMagnitude > 0.20) {
+            } else if (meanMagnitude <= 0.46 && meanMagnitude > 0.40) {
                 points += 0.50f;
             }
 
-            if (this.latestWiFiNumber >= 3) {
+            if (this.latestWiFiNumber >= 1) {
                 float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
                 if (this.latestWiFiNumber == this.commonWiFi) {
                     points += 0.70f;
-                } else {
+                } else if (this.latestWiFiNumber >= 3){
                     if (percent <= 0.10f) {
                         points += 0.50f;
                     }
@@ -663,7 +636,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Wifi numbers
-        if (this.latestWiFiNumber >= 3) {
+        if (this.latestWiFiNumber >= 1) {
             float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
             if (this.latestWiFiNumber == this.commonWiFi) {
                 points += 0.70f;
@@ -690,7 +663,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (convertToKmPerHour(avgSpeed) <= Constants.TopAvgSpeedAllowed && convertToKmPerHour(avgSpeed) > Constants.MaxAvgSpeedStill) {
-            points += 0.10f;
+            points += 0.20f;
         }
 
         if (convertToKmPerHour(avgSpeed) <= Constants.StopSpeed) {
@@ -698,7 +671,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (convertToKmPerHour(maxSpeed) <= Constants.MaxSpeedStill) {
-            points += 0.20f;
+            points += 0.30f;
         }
 
         return points >= 0.79f;
@@ -775,7 +748,7 @@ public class MainActivity extends AppCompatActivity {
             sumOfMagnitudes += Math.sqrt(sumOfPows);
         }
 
-        if (isAcc) this.meanAcc = sumOfMagnitudes / accReadings.size();; // Remove this
+        if (isAcc) this.meanAcc = sumOfMagnitudes / accReadings.size(); // Remove this
         return sumOfMagnitudes / accReadings.size();
     }
 
