@@ -25,19 +25,19 @@ public class Constants {
     public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
 
     // Emission Logic
-    public static final double[] CO2PerMode = {1.0, 34.0, 44.0, 98.0, 20.0, 1.0, 1.0, 72.0, 1.0};
-    public static final double[] WattPerMode = {3.0, 7.0, 34.0, 58.0, 40.0, 34.0, 55.0, 101.0, 1.0};
-    public static final double co2MultiplierDefaultCar = 1;
-    public static final double co2MultiplierSmallCar = 0.8;
-    public static final double co2MultiplierBigCar = 1.8;
-    public static final double co2MultiplierElectricCar = 0.5;
+    public static final double[] CO2PerMode = {20.0, 31.375, 72.116, 120.0, 22.45, 10.0, 3.3, 72.0, 0.0};
+    public static final double[] WattPerMode = {59.2, 272.0, 273.0, 455.8, 70.0, 32.2, 8.75, 270.0, 0.0};
+    public static final double co2MultiplierDefaultCar = 1.55;
+    public static final double co2MultiplierSmallCar = 1;
+    public static final double co2MultiplierBigCar = 1.98;
+    public static final double co2MultiplierElectricCar = 0.59;
 
-    public static final double co2MultiplierMeatDietWalking = 1.5;
-    public static final double co2MultiplierMeatDietBicylce = 1.5;
-    public static final double co2MultiplierVeganDietWalking = 0.5;
-    public static final double co2MultiplierVeganDietBicycle = 0.5;
-    public static final double co2MultiplierAverageDietWalking = 1.0;
-    public static final double co2MultiplierAverageDietBicycle = 1.0;
+    public static final double co2MultiplierMeatDietWalking = 11.5;
+    public static final double co2MultiplierMeatDietBicylce = 11.5;
+    public static final double co2MultiplierVeganDietWalking = 1.0;
+    public static final double co2MultiplierVeganDietBicycle = 1.0;
+    public static final double co2MultiplierAverageDietWalking = 5.0;
+    public static final double co2MultiplierAverageDietBicycle = 5.0;
     public static final double co2MultiplierNoDietWalking = 0.0;
     public static final double co2MultiplierNoDietBicycle = 0.0;
 
