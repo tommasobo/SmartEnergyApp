@@ -103,6 +103,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Integer> previousModes = new ArrayList<>();
     private double meanAcc;
 
+    private boolean scanning = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, settingsFragment, Constants.TAG_FRAGMENT_SETTINGS).hide(settingsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, statsFragment, Constants.TAG_FRAGMENT_STATS).hide(statsFragment).commit();
             this.getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, homeFragment, Constants.TAG_FRAGMENT_HOME).commit();
+
         }
     }
 
@@ -874,16 +877,24 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      */
     public void startScanning(View view) {
-        // Update Home Fragment
-        HomeFragment hF = (HomeFragment) homeFragment;
-        hF.startScanning();
-        view.setEnabled(false);
-        Intent serviceIntent = new Intent(this, DataCollectionService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            this.startForegroundService(serviceIntent);
-        } else {
-            this.startService(serviceIntent);
+        if(!scanning) {
+
+            // Update Home Fragment
+            HomeFragment hF = (HomeFragment) homeFragment;
+            hF.startScanning();
+            view.setEnabled(false);
+            Intent serviceIntent = new Intent(this, DataCollectionService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                this.startForegroundService(serviceIntent);
+            } else {
+                this.startService(serviceIntent);
+            }
         }
+        scanning = true;
+    }
+
+    public boolean isScanning(){
+        return scanning;
     }
 
     public void rightClickTopBar(View view) {
