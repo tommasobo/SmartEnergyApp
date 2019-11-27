@@ -25,12 +25,12 @@ public class Constants {
     public static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
 
     // Emission Logic
-    public static final double[] CO2PerMode = {20.0, 31.375, 72.116, 120.0, 22.45, 10.0, 20.0, 72.0, 0.0};
-    public static final double[] WattPerMode = {59.2, 272.0, 273.0, 455.8, 70.0, 32.2, 50.0, 270.0, 0.0};
+    public static final double[] CO2PerMode = {20.0, 31.375, 72.116, 120.0, 22.45, 10.0, 3.3, 72.0, 0.0};
+    public static final double[] WattPerMode = {59.2, 272.0, 273.0, 455.8, 70.0, 32.2, 8.75, 270.0, 0.0};
     public static final double co2MultiplierDefaultCar = 1.55;
     public static final double co2MultiplierSmallCar = 1;
     public static final double co2MultiplierBigCar = 1.98;
-    public static final double co2MultiplierElectricCar = 0.5;
+    public static final double co2MultiplierElectricCar = 0.59;
 
     public static final double co2MultiplierMeatDietWalking = 11.5;
     public static final double co2MultiplierMeatDietBicylce = 11.5;
