@@ -41,8 +41,8 @@ public class SettingsFragment extends Fragment {
             public void onClick(View v) {
                 ToolTip toolTip = new ToolTip.Builder()
                         .withText("Choose diet to count emissions \n for walking and bicycle. \n If ignored they will be zero.")
-                        .withTextSize(42)
-                        .withPadding(10,10,10,10)
+                        .withTextSize(40)
+                        .withPadding(15,15,15,15)
                         .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))
                         .build();
                 ToolTipView toolTipView = new ToolTipView.Builder(getContext())
@@ -59,8 +59,8 @@ public class SettingsFragment extends Fragment {
             public void onClick(View v) {
                 ToolTip toolTip = new ToolTip.Builder()
                         .withText("Choose the car you own \n to make calculations \n more precise")
-                        .withTextSize(42)
-                        .withPadding(10,10,10,10)
+                        .withTextSize(40)
+                        .withPadding(15,15,15,15)
                         .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))
                         .build();
                 ToolTipView toolTipView = new ToolTipView.Builder(getContext())

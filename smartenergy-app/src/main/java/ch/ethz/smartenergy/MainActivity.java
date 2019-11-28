@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
     private List<String> latestWifiNames = null;
     private List<String> oldWifiNames = null;
     private Location latestKnownLocation = null;
-    private int avgSpeed;
+    private double avgSpeedIcon;
     private int lastGPSUpdate = 0;
     private boolean gpsOn = false;
     private int lastKnownMode = 0;
@@ -212,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (locationScans == null || locationScans.isEmpty()) {
             this.lastGPSUpdate++;
+            this.accuracy = "N/A";
             return 0.0;
         }
 
@@ -368,24 +369,24 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                     MainActivity.this.oldWifiNames = new ArrayList<>();
                     if (MainActivity.this.latestWifiNames != null) {
-                        for (String ele : MainActivity.this.latestWifiNames) {
-                            MainActivity.this.oldWifiNames.add(ele);
-                        }
+                        MainActivity.this.oldWifiNames = new ArrayList<>(MainActivity.this.latestWifiNames);
                     }
                 }
+
+                MainActivity.this.latestWifiNames = new ArrayList<>();
                 if (scan.getWifiScans().size() >= 1) {
                     MainActivity.this.latestWiFiNumber = scan.getWifiScans().get(0).getDiscoveredDevices().size();
-                    MainActivity.this.latestWifiNames = new ArrayList<>();
                     scan.getWifiScans().get(0).getDiscoveredDevices().forEach(e ->
                             MainActivity.this.latestWifiNames.add(e.getSsid()));
+                } else {
+                    MainActivity.this.latestWiFiNumber = 0;
                 }
+
                 if (MainActivity.this.oldWiFiNumber == -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
                     MainActivity.this.oldWifiNames = new ArrayList<>();
                     if (MainActivity.this.latestWifiNames != null) {
-                        for (String ele : MainActivity.this.latestWifiNames) {
-                            MainActivity.this.oldWifiNames.add(ele);
-                        }
+                        MainActivity.this.oldWifiNames = new ArrayList<>(MainActivity.this.latestWifiNames);
                         MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
                     }
                 }
@@ -412,9 +413,7 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this.internalCycle++;
             }
         }
-
         }
-
     };
 
     private double calculateAccuracy(ArrayList<LocationScan> locationScans) {
@@ -520,7 +519,7 @@ public class MainActivity extends AppCompatActivity {
         distance += calculateDistance(locationScans,indexMaxMode);
         isGPSOn(locationScans2);
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeed), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
 
         if (this.internalCycle == 10) {
 
@@ -696,7 +695,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
-        this.avgSpeed = (int)locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        this.avgSpeedIcon = locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
         return locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
     }
 

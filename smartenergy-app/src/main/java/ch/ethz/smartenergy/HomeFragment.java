@@ -276,6 +276,31 @@ public class HomeFragment extends Fragment {
         return 1.0;
     }
 
+    private double addOptionsEnergy(double energy, String activity) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+
+        if (activity.equals("Car")) {
+            String dietName = preferences.getString("car", "Ignore Diet");
+            switch (dietName) {
+                case Constants.DEFAULT_CAR:
+                    energy *= Constants.energyMultiplierDefaultCar;
+                    break;
+                case Constants.SMALL_CAR:
+                    energy *= Constants.energyMultiplierSmallCar;
+                    break;
+                case Constants.BIG_CAR:
+                    energy *= Constants.energyMultiplierBigCar;
+                    break;
+                case Constants.ELECTRIC_CAR:
+                    energy *= Constants.energyMultiplierElectricCar;
+                    break;
+            }
+            return energy;
+        }
+
+        return 1.0;
+    }
+
     private void updateDistancePerMode(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
@@ -304,6 +329,9 @@ public class HomeFragment extends Fragment {
                 if (todayData.getJSONObject(activity).getDouble("distance") != 0.0) {
                     double energyPerMode = todayData.getJSONObject(activity).getDouble("distance");
                     energyPerMode = energyPerMode * (Constants.WattPerMode[i]) / 1000;
+                    if (activity.equals("Car")) {
+                        energyPerMode = addOptionsEnergy(energyPerMode, activity);
+                    }
                     if (energyPerMode >= 1.0) {
                         pieChartEntries.add(new PieEntry((int) energyPerMode, activity));
                         colorEntries.add(Constants.MATERIAL_COLORS[i]);

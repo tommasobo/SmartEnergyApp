@@ -458,6 +458,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                         int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                         energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
+                        if (activity.equals("Car")) {
+                            energyPerMode = addOptions(energyPerMode, activity);
+                        }
                         cal.setTime(cal.getTime());
                         yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + (int)energyPerMode);
                     } catch (ParseException ex) {
@@ -607,6 +610,31 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return 1.0;
     }
 
+    private double addOptionsEnergy(double energy, String activity) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+
+        if (activity.equals("Car")) {
+            String dietName = preferences.getString("car", "Ignore Diet");
+            switch (dietName) {
+                case Constants.DEFAULT_CAR:
+                    energy *= Constants.energyMultiplierDefaultCar;
+                    break;
+                case Constants.SMALL_CAR:
+                    energy *= Constants.energyMultiplierSmallCar;
+                    break;
+                case Constants.BIG_CAR:
+                    energy *= Constants.energyMultiplierBigCar;
+                    break;
+                case Constants.ELECTRIC_CAR:
+                    energy *= Constants.energyMultiplierElectricCar;
+                    break;
+            }
+            return energy;
+        }
+
+        return 1.0;
+    }
+
     private void updateDistancePerMode(List<JSONObject> listJson) {
         int i = 0;
         for (String activity: Constants.ListModes) {
@@ -708,6 +736,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                             double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                             energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
+                            if (activity.equals("Car")) {
+                                energyPerMode = addOptions(energyPerMode, activity);
+                            }
                             if (energyPerMode >= 1.0) {
                                 entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)energyPerMode, activity));
                             }
@@ -715,6 +746,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                             double energyPerMode = e.getJSONObject(activity).getDouble("distance");
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                             energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
+                            if (activity.equals("Car")) {
+                                energyPerMode = addOptions(energyPerMode, activity);
+                            }
                             if (energyPerMode >= 1.0) {
                                 entries.add(new Entry(this.lastWeekItems.get(runCount.get()), (float)energyPerMode, activity));
                             }

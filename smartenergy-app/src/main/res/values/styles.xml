@@ -18,4 +18,8 @@
         <item name="android:layout_marginLeft">1dp</item>
     </style>
 
+    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@drawable/background_splash</item>
+    </style>
+
 </resources>
