@@ -691,7 +691,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Wifi numbers
-        /*if (this.latestWiFiNumber >= 1) {
+        if (this.latestWiFiNumber >= 1) {
             float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
             if (this.latestWiFiNumber == this.commonWiFi) {
                 points += 0.70f;
@@ -705,7 +705,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             points += 0.30f;
-        }*/
+        }
 
         if (meanMagnitude <= 0.20) {
             points += 0.50f;
