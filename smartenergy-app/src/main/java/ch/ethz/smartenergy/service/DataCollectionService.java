@@ -125,7 +125,7 @@ public class DataCollectionService extends Service {
     }
 
     private void showNotification() {
-        int icon = R.drawable.ic_notification;
+        int icon = R.drawable.lamp;
         String text = getString(R.string.notification_service_text);
 
         // Create mandatory notification channel

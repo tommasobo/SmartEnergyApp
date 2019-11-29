@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     private List<Integer> previousModes = new ArrayList<>();
     private double previousAccuracy = -1.0;
     private double meanAcc;
+    private float points;
 
     private boolean scanning = false;
 
@@ -132,9 +133,9 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // load pretrained predictor_with_gps
-            InputStream model = getResources().openRawResource(R.raw.xgboost_with_gps);
+            InputStream model = getResources().openRawResource(R.raw.xgboost_final_with_gps);
             predictor_with_gps = new Predictor(model);
-            InputStream model_no_gps = getResources().openRawResource(R.raw.xgboost_without_gps);
+            InputStream model_no_gps = getResources().openRawResource(R.raw.xgboost_final_no_gps);
             predictor_without_gps = new Predictor(model_no_gps);
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -315,13 +316,11 @@ public class MainActivity extends AppCompatActivity {
                     this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
 
-                    if (this.lastGPSStatus.get(this.lastGPSStatus.size() - 1)) {
-                        for (int j = 0; j < this.lastGPSStatus.size() - 1; j++) {
-                            if (!this.lastGPSStatus.get(j)) {
-                                String key_update_gps = findMostRecentModeWithGPS();
-                                double d = activity.getJSONObject(key_update_gps).getDouble("distance");
-                                activity.getJSONObject(key_update_gps).put("distance", d + distance);
-                            }
+                    if (this.lastGPSStatus.get(this.lastGPSStatus.size() - 1) && this.lastGPSStatus.size() == 4) {
+                        if (!this.lastGPSStatus.get(0) && !this.lastGPSStatus.get(1) && !this.lastGPSStatus.get(2)) {
+                            String key_update_gps = findMostRecentModeWithGPS();
+                            double d = activity.getJSONObject(key_update_gps).getDouble("distance");
+                            activity.getJSONObject(key_update_gps).put("distance", d + distance);
                         }
                     } else {
                         double d = activity.getJSONObject(key).getDouble("distance");
@@ -423,12 +422,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                System.out.println("\n\nAvg Speed: " + avgSpeed + " MaxSpeed: " + maxSpeed + "\n\n");
-
                 boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
                         avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()), getLatitude(scan.getLocationScans()),
                         getLongitude(scan.getLocationScans()));
-
 
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
@@ -565,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points);
 
         if (this.internalCycle == 10) {
 
@@ -640,8 +636,8 @@ public class MainActivity extends AppCompatActivity {
         float[] predictions;
         if (this.gpsOn) {
             // build features vector
-            double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
-                    bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+            double[] features = {meanMagnitude, avgAccY, accuracyGPS,
+                    bluetoothNumbers, magnitudeGyro,
                     magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
                     maxSpeed, minSpeed};
             FVec features_vector = FVec.Transformer.fromArray(features, false);
@@ -650,7 +646,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // build features vector
             double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
-                    bluetoothNumbers, magnitudeGyro, avgGyroX,avgGyroY, avgGyroZ,
+                    bluetoothNumbers, magnitudeGyro,
                     magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ};
             FVec features_vector = FVec.Transformer.fromArray(features, false);
             //predict
@@ -690,11 +686,12 @@ public class MainActivity extends AppCompatActivity {
                 points += 0.30f;
             }
 
+            this.points = points;
             return points >= 0.79f;
         }
 
         // Wifi numbers
-        if (this.latestWiFiNumber >= 1) {
+        /*if (this.latestWiFiNumber >= 1) {
             float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
             if (this.latestWiFiNumber == this.commonWiFi) {
                 points += 0.70f;
@@ -708,7 +705,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             points += 0.30f;
-        }
+        }*/
 
         if (meanMagnitude <= 0.20) {
             points += 0.50f;
@@ -732,6 +729,7 @@ public class MainActivity extends AppCompatActivity {
             points += 0.30f;
         }
 
+        this.points = points;
         return points >= 0.79f;
     }
 
