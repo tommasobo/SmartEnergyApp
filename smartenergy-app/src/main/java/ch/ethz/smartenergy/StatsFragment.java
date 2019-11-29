@@ -1,8 +1,6 @@
 package ch.ethz.smartenergy;
 
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -23,19 +21,12 @@ import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -52,9 +43,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
     private String selectedGraphName = Constants.MENU_OPTIONS[1];
     private TextView dataTitle;
-    private List<Entry> lineChartEntry;
     private LineData lineData;
-    private List<Integer> colorEntries;
     private LineChart chart;
     private String selectedTimeFrame = Constants.TIMEFRAME_OPTIONS[0];
     private List<Integer> lastWeekItems;
@@ -69,7 +58,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
-
         this.dataTitle = getView().findViewById(R.id.titleGraph);
         Spinner spinner = getView().findViewById(R.id.spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
@@ -129,11 +117,8 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
     private List<JSONObject> getJsonYear(JSONObject json) {
         List<JSONObject> listJson = new ArrayList<>();
-        List<Integer> listMonth = new ArrayList<>();
         Iterator <?> keys = json.keys();
 
-        // For every month of the current year
-        //for (int i = 1; i <= 12; i++) {
         while (keys.hasNext()) {
             String key = (String) keys.next();
             try {
@@ -152,7 +137,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 e.printStackTrace();
             }
         }
-        //}
         return listJson;
     }
 
@@ -199,12 +183,12 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
         JSONObject json = new JSONObject();
 
-        if(!isFilePresent(getActivity(), "data.json")) {
+        if(!Utility.isFilePresent(getActivity(), "data.json")) {
             return;
         }
 
         try {
-            json = new JSONObject(read(getActivity(), "data.json"));
+            json = new JSONObject(Utility.read(getActivity(), "data.json"));
         } catch (JSONException err) {
             Log.d("Error", err.toString());
         }
@@ -232,12 +216,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             return;
         }
 
-        this.setChartUI(listJson);
+        this.setChartUI();
         chart.invalidate(); // refresh
     }
 
-    private void setChartUI(List<JSONObject> listJson) {
-        Calendar cal = Calendar.getInstance();
+    private void setChartUI() {
         chart.setData(lineData);
         if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
             chart.getData().setValueFormatter(new ValueFormatter() {
@@ -279,8 +262,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         } else {
             xAxis.setValueFormatter(new MonthViewFormatter());
         }
-        boolean forceLabelCount = false;
-
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
             chart.getXAxis().setAxisMinimum(0);
             chart.getXAxis().setAxisMaximum(6);
@@ -308,8 +289,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
     }
 
     private void setDataGraph(List<JSONObject> listJson) {
-        lineChartEntry = new ArrayList<>();
-        colorEntries = new ArrayList<>();
 
         if (selectedGraphName.equals(Constants.MENU_OPTIONS[0])) {
             this.updateDataTime(listJson);
@@ -373,9 +352,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
-                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
-                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
-                    rgb("#D81B60")
+                    Utility.rgb("#2ecc71"), Utility.rgb("#f1c40f"), Utility.rgb("#e74c3c"), Utility.rgb("#3498db"),
+                    Utility.rgb("#795548"), Utility.rgb("#607D8B"), Utility.rgb("#E040FB"), Utility.rgb("#00BFA5"),
+                    Utility.rgb("#D81B60")
             };
             dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
@@ -459,7 +438,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                         energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
                         if (activity.equals("Car")) {
-                            energyPerMode = addOptions(energyPerMode, activity);
+                            energyPerMode = addOptionsEnergy(energyPerMode, activity);
                         }
                         cal.setTime(cal.getTime());
                         yearAvg.set(cal.get(Calendar.MONTH), yearAvg.get(cal.get(Calendar.MONTH)) + (int)energyPerMode);
@@ -532,9 +511,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
-                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
-                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
-                    rgb("#D81B60")
+                    Utility.rgb("#2ecc71"), Utility.rgb("#f1c40f"), Utility.rgb("#e74c3c"), Utility.rgb("#3498db"),
+                    Utility.rgb("#795548"), Utility.rgb("#607D8B"), Utility.rgb("#E040FB"), Utility.rgb("#00BFA5"),
+                    Utility.rgb("#D81B60")
             };
             dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             dataSet.setColor(material_colors[i]);
@@ -691,9 +670,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
-                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
-                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
-                    rgb("#D81B60")
+                    Utility.rgb("#2ecc71"), Utility.rgb("#f1c40f"), Utility.rgb("#e74c3c"), Utility.rgb("#3498db"),
+                    Utility.rgb("#795548"), Utility.rgb("#607D8B"), Utility.rgb("#E040FB"), Utility.rgb("#00BFA5"),
+                    Utility.rgb("#D81B60")
             };
             dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             dataSet.setColor(material_colors[i]);
@@ -737,7 +716,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                             energyPerMode = energyPerMode * (Constants.WattPerMode[value]) / 1000;
                             if (activity.equals("Car")) {
-                                energyPerMode = addOptions(energyPerMode, activity);
+                                energyPerMode = addOptionsEnergy(energyPerMode, activity);
                             }
                             if (energyPerMode >= 1.0) {
                                 entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)energyPerMode, activity));
@@ -770,9 +749,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             }
             LineDataSet dataSet = new LineDataSet(entries, activity); // add entries to dataset
             final int[] material_colors = {
-                    rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
-                    rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),
-                    rgb("#D81B60")
+                    Utility.rgb("#2ecc71"), Utility.rgb("#f1c40f"), Utility.rgb("#e74c3c"), Utility.rgb("#3498db"),
+                    Utility.rgb("#795548"), Utility.rgb("#607D8B"), Utility.rgb("#E040FB"), Utility.rgb("#00BFA5"),
+                    Utility.rgb("#D81B60")
             };
             dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             dataSet.setColor(material_colors[i]);
@@ -783,82 +762,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             lineData.addDataSet(dataSet);
             i++;
         }
-    }
-
-    private int getMinXAxisPerMonth(float minValueFloat) {
-        int minValue = (int) minValueFloat;
-        if (minValue <= 2) {
-            return 1;
-        }
-        Calendar cal = Calendar.getInstance();
-        int dayThisMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-        if (dayThisMonth - minValue <= 0) {
-            return minValue - 2;
-        } else if (dayThisMonth - minValue == 1) {
-            return minValue - 1;
-        }
-        return minValue;
-    }
-
-    private int getMaxXAxisPerMonth(float maxValueFloat) {
-        int maxValue = (int) maxValueFloat;
-        if (maxValue <= 2) {
-            return 3;
-        }
-        Calendar cal = Calendar.getInstance();
-        int dayThisMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-        if (dayThisMonth - maxValue <= 1) {
-            return dayThisMonth;
-        }
-        return maxValue;
-    }
-
-    private int rgb(String s) {
-        int color = (int) Long.parseLong(s.replace("#", ""), 16);
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = (color >> 0) & 0xFF;
-        return Color.rgb(r, g, b);
-    }
-
-
-    private int getLabelNumberForMonth(int totalValue) {
-        Calendar cal = Calendar.getInstance();
-        int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
-        if (totalValue <= 3) {
-            return 3;
-        } else if (totalValue < 10) {
-            return totalValue;
-        } else if (totalValue < 20) {
-            return totalValue / 2;
-        } else {
-            return totalValue / 3;
-        }
-    }
-
-
-    private String read(Context context, String fileName) {
-        try {
-            FileInputStream fis = context.openFileInput(fileName);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader bufferedReader = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
-            }
-            return sb.toString();
-        } catch (FileNotFoundException fileNotFound) {
-            return null;
-        } catch (IOException ioException) {
-            return null;
-        }
-    }
-
-    private boolean isFilePresent(Context context, String fileName) {
-        String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
-        File file = new File(path);
-        return file.exists();
     }
 
     void menuClick(int selectedViewGraph) {

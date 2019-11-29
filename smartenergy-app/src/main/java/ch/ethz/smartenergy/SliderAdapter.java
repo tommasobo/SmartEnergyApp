@@ -36,7 +36,7 @@ public class SliderAdapter extends PagerAdapter {
 
     public String[] slide_paragraphs = {
             "Our App uses Machine Learning to detect automatically what mean of transport you are using and automatically calculates your carbon and energy footprint.\nMoreover we offer a sleek and clean User Interface where you can check your data in graphs.",
-            "You don't need to start and stop a trip, just start collecting the data when you feel like it. We will automatically take care of it. \n" +
+            "You don't need to start and stop a trip, just start collecting the data when you feel like it. We will automatically take care of it. Simply close the app when you are done. \n" +
                     "Please note that we only register and save meaningful trips, that means that walking inside the house with many stops in between will most likely not be registered while walking for more time without interruption will.",
             "Look at the different graphs to have a clear picture of your daily carbon and energy footprint  and see how your behaviour changes over time. There are also other interesting stats like distance and time.\n" +
                     "The icons on the home page light up based on how likely they are being used based on our predictions.",

@@ -36,13 +36,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,27 +59,31 @@ import ch.ethz.smartenergy.service.SensorScanPeriod;
 
 public class MainActivity extends AppCompatActivity {
 
-    private int internalCycle = 1;
-    private int selectedViewGraph = 1;
-
+    // Permissions
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
     private static final int PERMISSION_ALL = 4242;
     private int locationRequestCount = 0;
 
+    // XGBoost Models adn predictions result
     private Predictor predictor_with_gps;
     private Predictor predictor_without_gps;
+    private float[] predictions;
 
+    // Fragments and views
     private final Fragment homeFragment = new HomeFragment();
     private final Fragment statsFragment = new StatsFragment();
     private final Fragment settingsFragment = new SettingsFragment();
     private final Fragment onboardingFragment = new OnboardingFragment();
     private Fragment previousFragment = homeFragment;
     private Fragment currentFragment;
+    private int internalCycle = 1;
+    private int selectedViewGraph = 1;
 
+    // Storing most present modes
     private Map<String, Integer> mostPresentWindow;
     private Map<String, Integer> mostPresentPersistent;
 
-    private float[] predictions;
+    // Features
     private int countReset = 0;
     private double distance;
     private double accuracy;
@@ -105,9 +104,6 @@ public class MainActivity extends AppCompatActivity {
     private double previousAccuracy = -1.0;
     private double meanAcc;
     private float points;
-
-    private boolean scanning = false;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,15 +215,19 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mReceiver);
     }
 
+    /**
+     * Calculates the distance that has been travelled in a given time window. If GPS accuracy is too bad then
+     * the calculation is discarded.
+     *
+     * @param locationScans list of location in a time window
+     *
+     */
     private double calculateDistance(ArrayList<LocationScan> locationScans) {
 
         if (locationScans == null || locationScans.isEmpty()) {
             this.lastGPSUpdate++;
             return 0.0;
         }
-
-        //this.accuracy = "";
-        //locationScans.forEach(e->this.accuracy = this.accuracy + (int)e.getAccuracy() + " ");
 
         // Relax rules if we are missing GPS for a long time
         if (this.lastGPSUpdate >= Constants.MINUTES_WITHOUT_GPS) {
@@ -269,14 +269,21 @@ public class MainActivity extends AppCompatActivity {
         return (double) result[0];
     }
 
-    private void updateJSON(String key, ArrayList<LocationScan> locationScans, double distance) {
+    /**
+     * Upate the JSON file with the new data collected.
+     *
+     * @param key The activity which needs to be updated
+     * @param distance The distance travelled in meters
+     *
+     */
+    private void updateJSON(String key, double distance) {
 
-        boolean isFilePresent = isFilePresent(this, "data.json");
+        boolean isFilePresent = Utility.isFilePresent(this, "data.json");
         if(isFilePresent) {
-            String jsonString = read(this, "data.json");
+            String jsonString = Utility.read(this, "data.json");
             //do the json parsing here and do the rest of functionality of app
         } else {
-            boolean isFileCreated = create(this, "{}");
+            boolean isFileCreated = Utility.create(this, "{}");
             if(isFileCreated) {
                 //proceed with storing the first
             } else {
@@ -287,7 +294,7 @@ public class MainActivity extends AppCompatActivity {
         JSONObject json = new JSONObject();
 
         try {
-            json = new JSONObject(read(this, "data.json"));
+            json = new JSONObject(Utility.read(this, "data.json"));
         } catch (JSONException err){
             Log.d("Error", err.toString());
         }
@@ -360,10 +367,14 @@ public class MainActivity extends AppCompatActivity {
             exists = true;
         }
 
-        create(this, json.toString());
+        Utility.create(this, json.toString());
 
     }
 
+
+    /**
+     * Finds the most used recent mode where GPS was not present after we acquire a new GPS signal.
+     */
     private String findMostRecentModeWithGPS() {
         Map<Integer, Integer> mapModes = new HashMap<>();
 
@@ -385,16 +396,12 @@ public class MainActivity extends AppCompatActivity {
             ScanResult scan = (ScanResult) data.getSerializable(Constants.WindowBroadcastExtraName);
             if (scan != null) {
 
+                // Calculating some features
                 double meanMagnitude = calculateMeanMagnitude(scan.getAccReadings(), true);
-//                double minAcc = calculateMinAcc(scan.getAccReadings());
-//                double maxAcc = calculateMaxAcc(scan.getAccReadings());
                 double maxSpeed = calculateMaxSpead(scan.getLocationScans());
                 double avgSpeed = calculateAvgSpeed(scan.getLocationScans());
                 double minSpeed = calculateMinSpead(scan.getLocationScans());
                 double accuracyGPS = calculateAccuracy(scan.getLocationScans());
-//                double gyroAvg = calculateAvgGyro(scan.getGyroReadings());
-//                double gyroMin = calculateMinGyro(scan.getGyroReadings());
-//                double gyroMax = calculateMaxGyro(scan.getGyroReadings());
 
                 if (MainActivity.this.oldWiFiNumber != -1) {
                     MainActivity.this.oldWiFiNumber = MainActivity.this.latestWiFiNumber;
@@ -425,9 +432,7 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
                 }
 
-                boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
-                        avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()), getLatitude(scan.getLocationScans()),
-                        getLongitude(scan.getLocationScans()));
+                boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed);
 
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
@@ -439,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
                         calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
                         calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
 
-                updateData(isStill, predictionsXGBoost, scan.getLocationScans());
+                updateData(isStill, scan.getLocationScans());
 
                 MainActivity.this.internalCycle++;
             }
@@ -447,6 +452,12 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * Calculates the average accuracy of the GPS signal. If we don't have GPS accuracy we use the previous one.
+     *
+     * @param locationScans list of location in a time window
+     *
+     */
     private double calculateAccuracy(ArrayList<LocationScan> locationScans) {
         double accuracy = locationScans.stream().mapToDouble(LocationScan::getAccuracy).average().orElse(-1.0);
         if (accuracy == -1.0) {
@@ -461,6 +472,13 @@ public class MainActivity extends AppCompatActivity {
         return accuracy;
     }
 
+
+    /**
+     * Calculates the number of bluetooth numbers. If the current scan hasn't started, use the previous one
+     *
+     * @param bluetoothScans list of BL in a time window
+     *
+     */
     private int getBluetoothNumbers(ArrayList<BluetoothScan> bluetoothScans) {
         if (bluetoothScans == null) {
             return 0;
@@ -483,38 +501,6 @@ public class MainActivity extends AppCompatActivity {
         return (int)listBluetooth.stream().distinct().count();
     }
 
-    private double calculateMinAcc(ArrayList<SensorReading> accReadings) {
-        if (accReadings.size() == 0) return 0;
-        List<Double> listMagnitudes = new ArrayList<>();
-
-        for (SensorReading reading : accReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            listMagnitudes.add(Math.sqrt(sumOfPows));
-        }
-
-        return listMagnitudes.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
-    }
-
-    private double calculateMaxAcc(ArrayList<SensorReading> accReadings) {
-        if (accReadings.size() == 0) return 0;
-        List<Double> listMagnitudes = new ArrayList<>();
-
-        for (SensorReading reading : accReadings) {
-            double sumOfPows = reading.getValueOnXAxis() * reading.getValueOnXAxis() +
-                    reading.getValueOnYAxis() * reading.getValueOnYAxis() +
-                    reading.getValueOnZAxis() * reading.getValueOnZAxis();
-
-            System.out.println( "\n\n" + reading.getValueOnYAxis() +  "\n\n");
-            listMagnitudes.add(Math.sqrt(sumOfPows));
-        }
-
-        return listMagnitudes.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
-    }
-
     private double calculateMinSpead(ArrayList<LocationScan> locationScans) {
         double minSpeed = 9999;
         for (LocationScan locationScan : locationScans) {
@@ -529,7 +515,7 @@ public class MainActivity extends AppCompatActivity {
         return minSpeed;
     }
 
-    private void updateData(boolean isStill, float[] predictionsXGBoost, ArrayList<LocationScan> locationScans) {
+    private void updateData(boolean isStill, ArrayList<LocationScan> locationScans) {
         List<Float> listPredictions = new ArrayList<>();
         ArrayList<LocationScan> locationScans2 = new ArrayList<>(locationScans);
 
@@ -580,7 +566,7 @@ public class MainActivity extends AppCompatActivity {
                 this.lastKnownModes.add(key_number);
             }
 
-            updateJSON(key, locationScans, distance);
+            updateJSON(key, distance);
 
             // Update Home and Stats Fragment
             homeFragment = (HomeFragment) MainActivity.this.homeFragment;
@@ -661,11 +647,15 @@ public class MainActivity extends AppCompatActivity {
         return predictions;
     }
 
-    private double convertToKmPerHour(double metersPerSecond) {
-        return ((metersPerSecond*3600)/1000);
-    }
 
-    private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed, double avgAccX, double avgAccY, double avgAccZ, double latitude, double longitude) {
+    /**
+     * Calculates if we are moving or standing still based on WiFi changes, acceleration and speed
+     *
+     * @param meanMagnitude mean magnitude of the acceleration in a given window of time
+     * @param avgSpeed average speed in a given window of time
+     * @param maxSpeed max Speed in a given window of time
+     */
+    private boolean isStill(double meanMagnitude, double avgSpeed, double maxSpeed) {
         float points = 0.0f;
 
         // Case where no GPS detected
@@ -748,25 +738,13 @@ public class MainActivity extends AppCompatActivity {
         return maxSpeed;
     }
 
+    private double convertToKmPerHour(double metersPerSecond) {
+        return ((metersPerSecond*3600)/1000);
+    }
+
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
         this.avgSpeedIcon = locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
         return locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
-    }
-
-    private double getLatitude(ArrayList<LocationScan> locationScans) {
-        if (locationScans != null && !locationScans.isEmpty()) {
-            return locationScans.get(locationScans.size() - 1).getLatitude();
-        } else {
-            return 0.0;
-        }
-    }
-
-    private double getLongitude(ArrayList<LocationScan> locationScans) {
-        if (locationScans != null && !locationScans.isEmpty()) {
-            return locationScans.get(locationScans.size() - 1).getLongitude();
-        } else {
-            return 0.0;
-        }
     }
 
     private double avgAccX(ArrayList<SensorReading> accReadings) {
@@ -790,6 +768,13 @@ public class MainActivity extends AppCompatActivity {
         return accReadings.stream().mapToDouble(SensorReading::getValueOnZAxis).average().orElse(0.0);
     }
 
+
+    /**
+     * Calculates the mean magnitude of a given list of sensor with X,Y,Z values
+     *
+     * @param accReadings sensor readings
+     *
+     */
     private double calculateMeanMagnitude(ArrayList<SensorReading> accReadings, boolean isAcc) {
         if (accReadings.size() == 0) {
             if (isAcc) this.meanAcc = 0.0; // Remove this
@@ -933,26 +918,24 @@ public class MainActivity extends AppCompatActivity {
      * @param view
      */
     public void startScanning(View view) {
-        if(!scanning) {
 
-            // Update Home Fragment
-            HomeFragment hF = (HomeFragment) homeFragment;
-            hF.startScanning();
-            view.setEnabled(false);
-            Intent serviceIntent = new Intent(this, DataCollectionService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                this.startForegroundService(serviceIntent);
-            } else {
-                this.startService(serviceIntent);
-            }
+        // Update Home Fragment
+        HomeFragment hF = (HomeFragment) homeFragment;
+        hF.startScanning();
+        view.setEnabled(false);
+        Intent serviceIntent = new Intent(this, DataCollectionService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            this.startForegroundService(serviceIntent);
+        } else {
+            this.startService(serviceIntent);
         }
-        scanning = true;
     }
 
-    public boolean isScanning(){
-        return scanning;
-    }
-
+    /**
+     * Handles the right click on the top bar and updated the view with the selected one
+     *
+     * @param view current View in used
+     */
     public void rightClickTopBar(View view) {
         getNextElement(1);
         StatsFragment sF = (StatsFragment) statsFragment;
@@ -961,6 +944,11 @@ public class MainActivity extends AppCompatActivity {
         hF.menuClick(this.selectedViewGraph);
     }
 
+    /**
+     * Handles the left click on the top bar and updated the view with the selected one
+     *
+     * @param view current View in used
+     */
     public void leftClickTopBar(View view) {
         getNextElement(-1);
         StatsFragment sF = (StatsFragment) statsFragment;
@@ -969,6 +957,11 @@ public class MainActivity extends AppCompatActivity {
         hF.menuClick(this.selectedViewGraph);
     }
 
+    /**
+     * Get the selected integer representing the menu chosen. It is represented as a circular linked list.
+     *
+     * @param indexToAdd integer (-1 or 1) to represent what's the next menu page
+     */
     private void getNextElement(int indexToAdd) {
         if ((this.selectedViewGraph == Constants.MENU_OPTIONS.length - 1) && (indexToAdd == 1)) {
             this.selectedViewGraph = 0;
@@ -981,51 +974,17 @@ public class MainActivity extends AppCompatActivity {
         this.selectedViewGraph += indexToAdd;
     }
 
-
-    private String read(Context context, String fileName) {
-        try {
-            FileInputStream fis = context.openFileInput(fileName);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader bufferedReader = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
-            }
-            return sb.toString();
-        } catch (IOException fileNotFound) {
-            return null;
-        }
-    }
-
-    private boolean create(Context context, String jsonString){
-        try {
-            FileOutputStream fos = context.openFileOutput("data.json",Context.MODE_PRIVATE);
-            if (jsonString != null) {
-                fos.write(jsonString.getBytes());
-            }
-            fos.close();
-            return true;
-        } catch (IOException fileNotFound) {
-            return false;
-        }
-
-    }
-
-    public boolean isFilePresent(Context context, String fileName) {
-        String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
-        File file = new File(path);
-        return file.exists();
-    }
-
+    /**
+     * Getter to return the Home Fragment
+     */
     public Fragment getHomeFragment() {
         return homeFragment;
     }
 
+    /**
+     * Getter to return the Data Fragment
+     */
     public Fragment getStatsFragment() {
         return statsFragment;
     }
-
 }
-
-

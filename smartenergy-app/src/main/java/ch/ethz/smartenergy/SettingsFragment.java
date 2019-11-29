@@ -137,9 +137,6 @@ public class SettingsFragment extends Fragment {
             sF.updateChart();
         });
 
-
-
-
         Button buttonOpenSlider = (Button) getView().findViewById(R.id.buttonOpenSlider);
         buttonOpenSlider.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -148,10 +145,5 @@ public class SettingsFragment extends Fragment {
                 main.changeViewToOnboarding();
             }
         });
-
-
-
     }
-
-
 }

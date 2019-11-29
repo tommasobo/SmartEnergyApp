@@ -1,6 +1,5 @@
 package ch.ethz.smartenergy;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -27,12 +26,6 @@ import com.github.mikephil.charting.formatter.ValueFormatter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,21 +38,16 @@ import java.util.TimeZone;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-
 public class HomeFragment extends Fragment {
 
-    private MainActivity mainActivity;
     private List<CircleImageView> listIcons;
-
     private TextSwitcher textSwitcher;
     private TextView dataTitle;
     private PieChart chart;
     private Button button;
-
     private List<PieEntry> pieChartEntries;
     private List<Integer> colorEntries;
     private String selectedGraphName = Constants.MENU_OPTIONS[1];
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -72,7 +60,6 @@ public class HomeFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
-        this.mainActivity = (MainActivity) this.getActivity();
         View v = getView();
 
         dataTitle = getView().findViewById(R.id.data_title);
@@ -82,16 +69,11 @@ public class HomeFragment extends Fragment {
         textSwitcher.setCurrentText("not collecting any data");
         button = v.findViewById(R.id.button_start);
 
-        if(mainActivity.isScanning()){
-            button.setEnabled(false);
-            button.setText(R.string.start_scanning_on_click);
-        }
-
         this.listIcons = new ArrayList<>();
         for (int i = 0; i < Constants.ListModes.length; i++) {
             int resID = getResources().getIdentifier("iconMode" + i, "id", getActivity().getPackageName());
             CircleImageView img = getView().findViewById(resID);
-            img.setAlpha(0.33f);
+            img.setAlpha(0.30f);
             img.setBorderWidth(3);
             img.setBorderColor(Constants.MATERIAL_COLORS[i]);
             this.listIcons.add(img);
@@ -102,33 +84,22 @@ public class HomeFragment extends Fragment {
         this.updateChart(true);
     }
 
-    private String read(Context context, String fileName) {
-        try {
-            FileInputStream fis = context.openFileInput(fileName);
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader bufferedReader = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
-            }
-            return sb.toString();
-        } catch (FileNotFoundException fileNotFound) {
-            return null;
-        } catch (IOException ioException) {
-            return null;
-        }
-    }
 
+    /**
+     * Updates the main chart
+     *
+     * @param needsAnimation indicating if the graph needs an animation when it is getting updated
+     *
+     */
     void updateChart(boolean needsAnimation) {
 
-        if (!isFilePresent(getActivity(), "data.json")) {
+        if (!Utility.isFilePresent(getActivity(), "data.json")) {
             return;
         }
         JSONObject json = new JSONObject();
 
         try {
-            json = new JSONObject(read(getActivity(), "data.json"));
+            json = new JSONObject(Utility.read(getActivity(), "data.json"));
         } catch (JSONException err) {
             Log.d("Error", err.toString());
         }
@@ -152,6 +123,12 @@ public class HomeFragment extends Fragment {
         this.setChartUI(needsAnimation);
     }
 
+    /**
+     * Updated the graph based on the selected menu option
+     *
+     * @param todayData JSON with the data to be used for the graph
+     *
+     */
     private void setDataGraph(JSONObject todayData) {
 
         pieChartEntries = new ArrayList<>();
@@ -168,6 +145,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Updates the graph showing today's time utilization for each mode
+     *
+     * @param todayData JSON with the data to be used for the graph
+     *
+     */
     private void updateDataTime(JSONObject todayData) {
         int i = 0;
 
@@ -187,6 +170,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Updates the graph showing today's CO2 utilization for each mode
+     *
+     * @param todayData JSON with the data to be used for the graph
+     *
+     */
     private void updateCO2PerMode(JSONObject todayData) {
 
         int i = 0;
@@ -213,6 +202,13 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Select the right value for CO2 based on the options chosen by the user
+     *
+     * @param gPerCO2 current grams of CO2
+     * @param activity selected activity
+     *
+     */
     private double addOptions(double gPerCO2, String activity) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
 
@@ -276,6 +272,13 @@ public class HomeFragment extends Fragment {
         return 1.0;
     }
 
+    /**
+     * Select the right value for Wh based on the options chosen by the user
+     *
+     * @param energy current wh
+     * @param activity selected activity
+     *
+     */
     private double addOptionsEnergy(double energy, String activity) {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
 
@@ -301,6 +304,12 @@ public class HomeFragment extends Fragment {
         return 1.0;
     }
 
+    /**
+     * Updates the graph showing today's distance in KM for each mode
+     *
+     * @param todayData JSON with the data to be used for the graph
+     *
+     */
     private void updateDistancePerMode(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
@@ -319,6 +328,12 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Updates the graph showing today's Wh utilization for each mode
+     *
+     * @param todayData JSON with the data to be used for the graph
+     *
+     */
     private void updateEnergyPerMode(JSONObject todayData) {
         int i = 0;
         for (String activity : Constants.ListModes) {
@@ -344,8 +359,13 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    /**
+     * Set the GUI of the graph
+     *
+     * @param needsAnimation If the graph needs an animation when updating
+     *
+     */
     private void setChartUI(boolean needsAnimation) {
-
         // Outside values
         Legend l = this.chart.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
@@ -359,9 +379,9 @@ public class HomeFragment extends Fragment {
 
         set.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
         set.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
-        set.setValueLinePart1OffsetPercentage(100f); /** When valuePosition is OutsideSlice, indicates offset as percentage out of the slice size */
-        set.setValueLinePart1Length(0.45f); /** When valuePosition is OutsideSlice, indicates length of first half of the line */
-        set.setValueLinePart2Length(0.48f); /** When valuePosition is OutsideSlice, indicates length of second half of the line */
+        set.setValueLinePart1OffsetPercentage(100f); /* When valuePosition is OutsideSlice, indicates offset as percentage out of the slice size */
+        set.setValueLinePart1Length(0.45f); /* When valuePosition is OutsideSlice, indicates length of first half of the line */
+        set.setValueLinePart2Length(0.48f); /* When valuePosition is OutsideSlice, indicates length of second half of the line */
 
         this.chart.setExtraOffsets(20.f, 7.f, 20, 7f); // Ofsets of the view chart to prevent outside values being cropped /** Sets extra offsets (around the chart view) to be appended to the auto-calculated offsets.*/
         this.chart.setClickable(false);
@@ -406,29 +426,25 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    private boolean isFilePresent(Context context, String fileName) {
-        String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
-        File file = new File(path);
-        return file.exists();
-    }
-
-    private static int rgb(String hex) {
-        int color = (int) Long.parseLong(hex.replace("#", ""), 16);
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = (color >> 0) & 0xFF;
-        return Color.rgb(r, g, b);
-    }
-
+    /**
+     * Updates the GUI when the user starts scanning for data
+     *
+     */
     void startScanning() {
         if (this.chart != null && this.chart.getData() == null) {
             this.chart.setNoDataText("Collecting Data, please wait...");
-            this.chart.setNoDataTextColor(rgb("#1da554"));
+            this.chart.setNoDataTextColor(Utility.rgb("#1da554"));
             this.chart.invalidate();
         }
         this.button.setText(R.string.start_scanning_on_click);
     }
 
+    /**
+     * Updates the GUI when the user changes graph
+     *
+     * @param selectedViewGraph selected graph by the user
+     *
+     */
     void menuClick(int selectedViewGraph) {
         this.selectedGraphName = Constants.MENU_OPTIONS[selectedViewGraph];
         this.updateChart(true);
@@ -439,17 +455,23 @@ public class HomeFragment extends Fragment {
         return (value / (double) total) * 100;
     }
 
+    /**
+     * Updated the Icons on the homepage based on how likely each mode is
+     *
+     * @param mostPresentWindow map with the predictions for each mode
+     *
+     */
     void updateIcons(Map<String, Integer> mostPresentWindow, double accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
 
         TextView t = getView().findViewById(R.id.accuracyText);
         String s = "GPS on: " + gpsOn + " GPS Accuracy: " + String.format("%.3f", accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points;
-        //t.setText(s);
+        t.setText(s);
 
         for (String activity : Constants.ListModes) {
             if (!mostPresentWindow.containsKey(activity)) {
                 int index = Arrays.asList(Constants.ListModes).indexOf(activity);
                 CircleImageView img = listIcons.get(index);
-                img.setAlpha(0.33f);
+                img.setAlpha(0.30f);
                 img.setBorderWidth(3);
             }
         }
@@ -458,7 +480,7 @@ public class HomeFragment extends Fragment {
             CircleImageView img = listIcons.get(index);
             if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 33.3f &&
                     getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) > 15f) {
-                img.setAlpha(0.50f);
+                img.setAlpha(0.45f);
                 img.setBorderWidth(5);
             } else if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 66.6f) {
                 img.setAlpha(0.75f);
