@@ -439,10 +439,10 @@ public class HomeFragment extends Fragment {
         return (value / (double) total) * 100;
     }
 
-    void updateIcons(Map<String, Integer> mostPresentWindow, double accuracy, int latestWiFiNumber, int oldWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
+    void updateIcons(Map<String, Integer> mostPresentWindow, double accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
 
         TextView t = getView().findViewById(R.id.accuracyText);
-        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldVsNew): " + latestWiFiNumber + " " + oldWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers + " Mean Acc: " +  String.format(Locale.ENGLISH, "%.4f", meanAcc) + " Points: " + points;
+        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers + " Mean Acc: " +  String.format(Locale.ENGLISH, "%.4f", meanAcc) + " Points: " + points;
         t.setText(s);
 
         for (String activity : Constants.ListModes) {

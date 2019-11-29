@@ -418,8 +418,11 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this.oldWifiNames = new ArrayList<>();
                     if (MainActivity.this.latestWifiNames != null) {
                         MainActivity.this.oldWifiNames = new ArrayList<>(MainActivity.this.latestWifiNames);
-                        MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
                     }
+                }
+
+                if (MainActivity.this.latestWifiNames != null && MainActivity.this.oldWifiNames != null) {
+                    MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
                 }
 
                 boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed, avgAccX(scan.getAccReadings()),
@@ -561,7 +564,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points);
+        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points);
 
         if (this.internalCycle == 10) {
 
