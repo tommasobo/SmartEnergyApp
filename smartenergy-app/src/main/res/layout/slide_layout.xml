@@ -14,10 +14,11 @@
 
         <ImageView
             android:id="@+id/slideImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:srcCompat="@drawable/placeholder" />
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="50dp"
+            app:srcCompat="@drawable/pie_chart_example" />
 
         <TextView
             android:id="@+id/slideHeading"

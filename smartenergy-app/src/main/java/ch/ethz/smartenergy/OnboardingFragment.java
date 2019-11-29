@@ -62,7 +62,7 @@ public class OnboardingFragment extends Fragment {
             @Override
             public void onClick(View v) {
 
-                if(currentPage == 2){
+                if(currentPage == 3){
 
                     SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
                     SharedPreferences.Editor editor = preferences.edit();
@@ -87,7 +87,7 @@ public class OnboardingFragment extends Fragment {
 
     private void addDotsNavigation(int position){
 
-        dots = new TextView[3];
+        dots = new TextView[4];
         dotLayout.removeAllViews();
 
         for(int i = 0; i < dots.length; i++){

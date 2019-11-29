@@ -21,20 +21,25 @@ public class SliderAdapter extends PagerAdapter {
     }
 
     public int[] slide_images = {
-            R.drawable.placeholder,
-            R.drawable.placeholder,
-            R.drawable.placeholder
+            R.drawable.lamp,
+            R.drawable.deep_learning,
+            R.drawable.barchart,
+            R.drawable.ecologic
     };
 
     public String[] slide_headings = {
             "Welcome to Smart Energy",
+            "How it works",
             "Visualize your impact",
             "Personalize your experience"
     };
 
     public String[] slide_paragraphs = {
-            "With our application you can monitor your impact on the environment through transportation.",
-            "Look at the different graphs to have a clear picture of your daily carbon and energy footprint  and see how your behaviour changes over time. There are also other interesting stats like distance and time. ",
+            "Our App uses Machine Learning to detect automatically what mean of transport you are using and automatically calculates your carbon and energy footprint.\nMoreover we offer a sleek and clean User Interface where you can check your data in graphs.",
+            "You don't need to start and stop a trip, just start collecting the data when you feel like it. We will automatically take care of it. \n" +
+                    "Please note that we only register and save meaningful trips, that means that walking inside the house with many stops in between will most likely not be registered while walking for more time without interruption will.",
+            "Look at the different graphs to have a clear picture of your daily carbon and energy footprint  and see how your behaviour changes over time. There are also other interesting stats like distance and time.\n" +
+                    "The icons on the home page light up based on how likely they are being used based on our predictions.",
             "You can go to settings to personalize your experience. We can provide more accurate results if you can give us some information about your habits."
     };
 

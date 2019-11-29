@@ -40,7 +40,7 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 ToolTip toolTip = new ToolTip.Builder()
-                        .withText("Choose diet to count emissions \n for walking and bicycle. \n If ignored they will be zero.")
+                        .withText("Choose diet to count emissions \n for walking and bicycle. \n If ignored they will count as zero.")
                         .withTextSize(40)
                         .withPadding(15,15,15,15)
                         .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))

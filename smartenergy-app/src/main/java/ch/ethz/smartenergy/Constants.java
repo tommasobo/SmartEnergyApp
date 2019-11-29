@@ -56,9 +56,9 @@ public class Constants {
     public static final String TAG_FRAGMENT_ONBOARDING = "fragment_onboarding";
     public static final String[] TIMEFRAME_OPTIONS = {"Past Week", "This Month", "This Year"};
     public static final String[] MENU_OPTIONS = {"Time per Mode", "CO₂ per Mode", "Distance per Mode", "Energy per Mode"};
-    public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Transportation For Today",
-            "CO₂ (g) Per Transportation For Today", "Distance (km) Per Transportation For Today", "Energy (Wh) Per Transportation For Today"};
-    public static final String[] GRAPH_DESCRIPTION = {"Minutes Per Transportation Mode for", "CO₂ (g) Per Transportation Mode for", "Distance (km) per Mode for", "Energy (Wh) per Mode for"};
+    public static final CharSequence[] PIE_GRAPH_DESCRIPTION = {"Minutes Per Mode For Today",
+            "CO₂ (g) Per Mode For Today", "Distance (km) Per Mode For Today", "Energy (Wh) Per Mode For Today"};
+    public static final String[] GRAPH_DESCRIPTION = {"Minutes Per Transportation Mode for", "CO₂ (g) Per Transportation Mode for", "Distance (km) per Transportation Mode for", "Energy (Wh) per Transportation Mode for"};
     public static final int[] MATERIAL_COLORS = {
             rgb("#2ecc71"), rgb("#f1c40f"), rgb("#e74c3c"), rgb("#3498db"),
             rgb("#795548"), rgb("#607D8B"), rgb("#E040FB"), rgb("#00BFA5"),

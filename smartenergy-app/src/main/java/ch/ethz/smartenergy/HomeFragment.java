@@ -442,8 +442,8 @@ public class HomeFragment extends Fragment {
     void updateIcons(Map<String, Integer> mostPresentWindow, double accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
 
         TextView t = getView().findViewById(R.id.accuracyText);
-        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + accuracy + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + avgSpeed + " Blue : " + blueNumbers + " Mean Acc: " +  String.format(Locale.ENGLISH, "%.4f", meanAcc) + " Points: " + points;
-        t.setText(s);
+        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + String.format("%.3f", accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points;
+        //t.setText(s);
 
         for (String activity : Constants.ListModes) {
             if (!mostPresentWindow.containsKey(activity)) {
