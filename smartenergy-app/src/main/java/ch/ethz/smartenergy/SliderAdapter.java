@@ -13,28 +13,27 @@ import androidx.viewpager.widget.PagerAdapter;
 
 public class SliderAdapter extends PagerAdapter {
 
-    Context context;
-    LayoutInflater layoutInflater;
+    private Context context;
 
-    public SliderAdapter(Context context){
+    SliderAdapter(Context context){
         this.context = context;
     }
 
-    public int[] slide_images = {
+    private int[] slide_images = {
             R.drawable.lamp,
             R.drawable.deep_learning,
             R.drawable.barchart,
             R.drawable.ecologic
     };
 
-    public String[] slide_headings = {
+    private String[] slide_headings = {
             "Welcome to Smart Energy",
             "How it works",
             "Visualize your impact",
             "Personalize your experience"
     };
 
-    public String[] slide_paragraphs = {
+    private String[] slide_paragraphs = {
             "Our App uses Machine Learning to detect automatically what mean of transport you are using and automatically calculates your carbon and energy footprint.\nMoreover we offer a sleek and clean User Interface where you can check your data in graphs.",
             "You don't need to start and stop a trip, just start collecting the data when you feel like it. We will automatically take care of it. Simply close the app when you are done. \n" +
                     "Please note that we only register and save meaningful trips, that means that walking inside the house with many stops in between will most likely not be registered while walking for more time without interruption will.",
@@ -52,19 +51,22 @@ public class SliderAdapter extends PagerAdapter {
 
     @Override
     public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-        return view == (RelativeLayout) object;
+        return view == object;
     }
 
     @NonNull
     @Override
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
 
-        layoutInflater = (LayoutInflater) context.getSystemService(context.LAYOUT_INFLATER_SERVICE);
-        View view = layoutInflater.inflate(R.layout.slide_layout, container, false);
+        LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = null;
+        if (layoutInflater != null) {
+            view = layoutInflater.inflate(R.layout.slide_layout, container, false);
+        }
 
-        ImageView slideImage = (ImageView) view.findViewById(R.id.slideImage);
-        TextView slideHeading = (TextView) view.findViewById(R.id.slideHeading);
-        TextView slideParagraph = (TextView) view.findViewById(R.id.slideParagraph);
+        ImageView slideImage = view.findViewById(R.id.slideImage);
+        TextView slideHeading = view.findViewById(R.id.slideHeading);
+        TextView slideParagraph = view.findViewById(R.id.slideParagraph);
 
         slideImage.setImageResource(slide_images[position]);
         slideHeading.setText(slide_headings[position]);

@@ -58,9 +58,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
-        this.dataTitle = getView().findViewById(R.id.titleGraph);
+        this.dataTitle = Objects.requireNonNull(getView()).findViewById(R.id.titleGraph);
         Spinner spinner = getView().findViewById(R.id.spinner);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(),
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(Objects.requireNonNull(getContext()),
                 R.array.list_options, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
@@ -70,16 +70,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         updateChart();
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view,
-                               int pos, long id) {
-        this.selectedTimeFrame = parent.getItemAtPosition(pos).toString();
-        updateChart();
-    }
-
-    public void onNothingSelected(AdapterView<?> parent) {
-        // Another interface callback
-    }
-
+    /**
+     * Returns the title of the graph based on the time frame selected
+     */
     private String getTitleGraph() {
         if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
             return "the past week";
@@ -90,6 +83,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+    /**
+     * Returns json objects which includes data in the current month.
+     *
+     * @param  json json data
+     */
     private List<JSONObject> getJsonMonth(JSONObject json) {
         List<JSONObject> listJson = new ArrayList<>();
         Iterator <?> keys = json.keys();
@@ -115,6 +113,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return listJson;
     }
 
+    /**
+     * Returns json objects which includes data in the current year.
+     *
+     * @param  json json data
+     */
     private List<JSONObject> getJsonYear(JSONObject json) {
         List<JSONObject> listJson = new ArrayList<>();
         Iterator <?> keys = json.keys();
@@ -140,6 +143,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return listJson;
     }
 
+    /**
+     * Returns json objects which includes data in the past week
+     *
+     * @param  json json data
+     */
     private List<JSONObject> getJsonPastWeek(JSONObject json) {
         List<JSONObject> listJson = new ArrayList<>();
         this.lastWeekItems = new ArrayList<>();
@@ -176,19 +184,24 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return listJson;
     }
 
+    /**
+     * Updates the main chart
+     */
     void updateChart() {
         View v = getView();
-        this.chart = v.findViewById(R.id.chart);
+        if (v != null) {
+            this.chart = v.findViewById(R.id.chart);
+        }
         chart.setNoDataText("No data available for the selected graph.");
 
         JSONObject json = new JSONObject();
 
-        if(!Utility.isFilePresent(getActivity(), "data.json")) {
+        if(!Utility.isFilePresent(Objects.requireNonNull(getActivity()))) {
             return;
         }
 
         try {
-            json = new JSONObject(Utility.read(getActivity(), "data.json"));
+            json = new JSONObject(Objects.requireNonNull(Utility.read(getActivity())));
         } catch (JSONException err) {
             Log.d("Error", err.toString());
         }
@@ -215,11 +228,13 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             this.chart.invalidate();
             return;
         }
-
         this.setChartUI();
         chart.invalidate(); // refresh
     }
 
+    /**
+     * Sets the Chart UI
+     */
     private void setChartUI() {
         chart.setData(lineData);
         if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[2])) {
@@ -288,6 +303,11 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         chart.getXAxis().setDrawGridLines(false);
     }
 
+    /**
+     * Set the data for the graph based on the graph selected
+     *
+     * @param  listJson list of json data
+     */
     private void setDataGraph(List<JSONObject> listJson) {
 
         if (selectedGraphName.equals(Constants.MENU_OPTIONS[0])) {
@@ -301,6 +321,12 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+    /**
+     * Updates the graph showing time of utilization for each mode
+     *
+     * @param listJson JSON with the data to be used for the graph
+     *
+     */
     private void updateDataTime(List<JSONObject> listJson) {
         int i = 0;
 
@@ -325,15 +351,15 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         ex.printStackTrace();
                     }
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
-                        this.getYearAvg(e, entries, yearAvg, activity);
+                        this.getYearAvg(e, yearAvg, activity);
                     } else if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])){
                         if (e.getJSONObject(activity).getInt("time") != 0) {
-                            Date date = cal.getTime();
+                            cal.getTime();
                             entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), e.getJSONObject(activity).getInt("time"), activity));
                         }
                     } else {
                         if (e.getJSONObject(activity).getInt("time") != 0) {
-                            Date date = cal.getTime();
+                            cal.getTime();
                             entries.add(new Entry(this.lastWeekItems.get(runCount.get()), e.getJSONObject(activity).getInt("time"), activity));
                         }
                     }
@@ -368,7 +394,15 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
-    private void getYearAvg(JSONObject e, List<Entry> entries, List<Integer> yearAvg, String activity) {
+    /**
+     * Get the Avg for the year
+     *
+     * @param e current json object selected
+     * @param yearAvg list of data per year
+     * @param activity current activity
+     *
+     */
+    private void getYearAvg(JSONObject e, List<Integer> yearAvg, String activity) {
         if (this.selectedGraphName.equals(Constants.MENU_OPTIONS[0])) {
             try {
                 if (e.getJSONObject(activity).getInt("time") != 0) {
@@ -452,6 +486,13 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+
+    /**
+     * Updates the graph showing CO2 for each mode
+     *
+     * @param listJson JSON with the data to be used for the graph
+     *
+     */
     private void updateCO2PerMode(List<JSONObject> listJson) {
         int i = 0;
         for (String activity: Constants.ListModes) {
@@ -476,10 +517,10 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     }
 
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
-                        this.getYearAvg(e, entries, yearAvg, activity);
+                        this.getYearAvg(e, yearAvg, activity);
                     } else {
                         if (e.getJSONObject(activity).getDouble("distance") != 0) {
-                            Date date = cal.getTime();
+                            cal.getTime();
                             double gCO2 = e.getJSONObject(activity).getDouble("distance");
                             int value = Arrays.asList(Constants.ListModes).indexOf(activity);
                             gCO2 = gCO2 * (Constants.CO2PerMode[value] / 1000);
@@ -526,8 +567,15 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+    /**
+     * Select the right value for CO2 based on the options chosen by the user
+     *
+     * @param gPerCO2 current grams of CO2
+     * @param activity selected activity
+     *
+     */
     private double addOptions(double gPerCO2, String activity) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(Objects.requireNonNull(getView()).getContext());
 
         if (activity.equals("Foot")) {
             String dietName = preferences.getString("diet", "Ignore Diet");
@@ -589,8 +637,15 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return 1.0;
     }
 
+    /**
+     * Select the right value for Wh based on the options chosen by the user
+     *
+     * @param energy current wh
+     * @param activity selected activity
+     *
+     */
     private double addOptionsEnergy(double energy, String activity) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(Objects.requireNonNull(getView()).getContext());
 
         if (activity.equals("Car")) {
             String dietName = preferences.getString("car", "Ignore Diet");
@@ -614,6 +669,12 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         return 1.0;
     }
 
+    /**
+     * Updates the graph showing distance in Km of utilization for each mode
+     *
+     * @param listJson JSON with the data to be used for the graph
+     *
+     */
     private void updateDistancePerMode(List<JSONObject> listJson) {
         int i = 0;
         for (String activity: Constants.ListModes) {
@@ -638,16 +699,16 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     }
 
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
-                        this.getYearAvg(e, entries, yearAvg, activity);
+                        this.getYearAvg(e, yearAvg, activity);
                     } else {
                         if (e.getJSONObject(activity).getDouble("distance") >= 10 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
-                            Date date = cal.getTime();
+                            cal.getTime();
                             if (e.getJSONObject(activity).getDouble("distance") >= 10) {
                                 entries.add(new Entry(cal.get(Calendar.DAY_OF_MONTH), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
                             }
 
                         } else if (e.getJSONObject(activity).getDouble("distance") >= 10 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[0])) {
-                            Date date = cal.getTime();
+                            cal.getTime();
                             if (e.getJSONObject(activity).getDouble("distance") >= 10) {
                                 entries.add(new Entry(this.lastWeekItems.get(runCount.get()), (float)(e.getJSONObject(activity).getDouble("distance") / 1000), activity));
                             }
@@ -685,6 +746,12 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+    /**
+     * Updates the graph showing energy in Wh of utilization for each mode
+     *
+     * @param listJson JSON with the data to be used for the graph
+     *
+     */
     private void updateEnergyPerMode(List<JSONObject> listJson) {
         int i = 0;
         for (String activity: Constants.ListModes) {
@@ -709,7 +776,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                     }
 
                     if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
-                        this.getYearAvg(e, entries, yearAvg, activity);
+                        this.getYearAvg(e, yearAvg, activity);
                     } else {
                         if (e.getJSONObject(activity).getDouble("distance") != 0 && this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[1])) {
                             double energyPerMode = e.getJSONObject(activity).getDouble("distance");
@@ -764,9 +831,25 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         }
     }
 
+    /**
+     * Updates the GUI when menu button is clicked
+     *
+     * @param selectedViewGraph selected view
+     *
+     */
     void menuClick(int selectedViewGraph) {
         this.selectedGraphName = Constants.MENU_OPTIONS[selectedViewGraph];
         this.updateChart();
         this.dataTitle.setText(this.selectedGraphName);
+    }
+
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        this.selectedTimeFrame = parent.getItemAtPosition(pos).toString();
+        updateChart();
+    }
+
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
     }
 }

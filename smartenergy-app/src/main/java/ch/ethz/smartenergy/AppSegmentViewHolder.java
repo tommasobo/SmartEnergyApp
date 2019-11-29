@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import segmented_control.widget.custom.android.com.segmentedcontrol.item_row_column.SegmentViewHolder;
 
 public class AppSegmentViewHolder extends SegmentViewHolder<String> {
-    TextView textView;
+    private TextView textView;
 
     public AppSegmentViewHolder(@NonNull View sectionView) {
         super(sectionView);

@@ -3,7 +3,6 @@ package ch.ethz.smartenergy;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.text.method.ScrollingMovementMethod;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,12 +10,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.TooltipCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -54,26 +49,23 @@ public class SettingsFragment extends Fragment {
             }
         });
 
-        getView().findViewById(R.id.button_info_car).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ToolTip toolTip = new ToolTip.Builder()
-                        .withText("Choose the car you own \n to make calculations \n more precise")
-                        .withTextSize(40)
-                        .withPadding(15,15,15,15)
-                        .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))
-                        .build();
-                ToolTipView toolTipView = new ToolTipView.Builder(getContext())
-                        .withAnchor(v)
-                        .withToolTip(toolTip)
-                        .withGravity(Gravity.END)
-                        .build();
-                toolTipView.show();
-            }
+        getView().findViewById(R.id.button_info_car).setOnClickListener(v -> {
+            ToolTip toolTip = new ToolTip.Builder()
+                    .withText("Choose the car you own \n to make calculations \n more precise")
+                    .withTextSize(40)
+                    .withPadding(15,15,15,15)
+                    .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))
+                    .build();
+            ToolTipView toolTipView = new ToolTipView.Builder(getContext())
+                    .withAnchor(v)
+                    .withToolTip(toolTip)
+                    .withGravity(Gravity.END)
+                    .build();
+            toolTipView.show();
         });
 
 
-        RadioGroup rgDiet = (RadioGroup) getView().findViewById(R.id.radio_group_diet);
+        RadioGroup rgDiet = getView().findViewById(R.id.radio_group_diet);
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         int dietId = preferences.getInt("dietId", -1);
@@ -142,7 +134,9 @@ public class SettingsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 MainActivity main = (MainActivity) getActivity();
-                main.changeViewToOnboarding();
+                if (main != null) {
+                    main.changeViewToOnboarding();
+                }
             }
         });
     }

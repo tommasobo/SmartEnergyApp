@@ -1,5 +1,6 @@
 package ch.ethz.smartenergy;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -14,10 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.core.text.HtmlCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
-
-import org.w3c.dom.Text;
 
 public class OnboardingFragment extends Fragment {
 
@@ -32,8 +30,6 @@ public class OnboardingFragment extends Fragment {
 
     private TextView[] dots;
 
-    private SliderAdapter sliderAdapter;
-
     private Button nextButton;
     private Button backButton;
 
@@ -44,13 +40,13 @@ public class OnboardingFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
 
-        slideViewPager = (ViewPager) getView().findViewById(R.id.slideViewPager);
-        dotLayout = (LinearLayout) getView().findViewById(R.id.dotNavigation);
+        slideViewPager = getView().findViewById(R.id.slideViewPager);
+        dotLayout = getView().findViewById(R.id.dotNavigation);
 
-        nextButton = (Button) getView().findViewById(R.id.nextButton);
-        backButton = (Button) getView().findViewById(R.id.previousButton);
+        nextButton = getView().findViewById(R.id.nextButton);
+        backButton = getView().findViewById(R.id.previousButton);
 
-        sliderAdapter = new SliderAdapter(getContext());
+        SliderAdapter sliderAdapter = new SliderAdapter(getContext());
 
         slideViewPager.setAdapter(sliderAdapter);
 
@@ -58,27 +54,26 @@ public class OnboardingFragment extends Fragment {
 
         slideViewPager.addOnPageChangeListener(viewListener);
 
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        nextButton.setOnClickListener(v -> {
 
-                if(currentPage == 3){
+            if(currentPage == 3){
 
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-                    SharedPreferences.Editor editor = preferences.edit();
-                    editor.putBoolean("first_time", false);
-                    editor.apply();
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putBoolean("first_time", false);
+                editor.apply();
 
-                    MainActivity main = (MainActivity) getActivity();
+                MainActivity main = (MainActivity) getActivity();
+                if (main != null) {
                     main.changeViewToPrevious();
-
-                    currentPage = -1;
-
                 }
 
-                slideViewPager.setCurrentItem(currentPage + 1);
+                currentPage = -1;
 
             }
+
+            slideViewPager.setCurrentItem(currentPage + 1);
+
         });
 
         backButton.setOnClickListener(v -> slideViewPager.setCurrentItem(currentPage - 1));
@@ -112,6 +107,7 @@ public class OnboardingFragment extends Fragment {
 
         }
 
+        @SuppressLint("SetTextI18n")
         @Override
         public void onPageSelected(int position) {
 

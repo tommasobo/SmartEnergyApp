@@ -14,9 +14,15 @@ final class Utility {
 
     private Utility() {}
 
-    static String read(Context context, String fileName) {
+    /**
+     * Reads a JSON file and return its content
+     *
+     * @param context context of the android App
+     *
+     */
+    static String read(Context context) {
         try {
-            FileInputStream fis = context.openFileInput(fileName);
+            FileInputStream fis = context.openFileInput("data.json");
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader bufferedReader = new BufferedReader(isr);
             StringBuilder sb = new StringBuilder();
@@ -30,6 +36,12 @@ final class Utility {
         }
     }
 
+    /**
+     * Creates a JSON file and return its content
+     *
+     * @param context context of the android App
+     *
+     */
     static boolean create(Context context, String jsonString){
         try {
             FileOutputStream fos = context.openFileOutput("data.json",Context.MODE_PRIVATE);
@@ -44,13 +56,24 @@ final class Utility {
 
     }
 
-
-    static boolean isFilePresent(Context context, String fileName) {
-        String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
+    /**
+     * Check if a JSON file is present
+     *
+     * @param context context of the android App
+     *
+     */
+    static boolean isFilePresent(Context context) {
+        String path = context.getFilesDir().getAbsolutePath() + "/" + "data.json";
         File file = new File(path);
         return file.exists();
     }
 
+    /**
+     * Converts from Hex to RGB
+     *
+     * @param hex color in Hex
+     *
+     */
     static int rgb(String hex) {
         int color = (int) Long.parseLong(hex.replace("#", ""), 16);
         int r = (color >> 16) & 0xFF;

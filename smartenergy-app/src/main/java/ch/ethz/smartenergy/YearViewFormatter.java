@@ -4,7 +4,6 @@ import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 
 import java.text.DateFormatSymbols;
-import java.util.Calendar;
 import java.util.Locale;
 
 

@@ -1,5 +1,6 @@
 package ch.ethz.smartenergy;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -34,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -62,16 +64,16 @@ public class HomeFragment extends Fragment {
 
         View v = getView();
 
-        dataTitle = getView().findViewById(R.id.data_title);
+        dataTitle = Objects.requireNonNull(getView()).findViewById(R.id.data_title);
         textSwitcher = getView().findViewById(R.id.textSwitcher);
         textSwitcher.setInAnimation(getView().getContext(), android.R.anim.slide_in_left);
         textSwitcher.setOutAnimation(getView().getContext(), android.R.anim.slide_out_right);
         textSwitcher.setCurrentText("not collecting any data");
-        button = v.findViewById(R.id.button_start);
+        button = Objects.requireNonNull(v).findViewById(R.id.button_start);
 
         this.listIcons = new ArrayList<>();
         for (int i = 0; i < Constants.ListModes.length; i++) {
-            int resID = getResources().getIdentifier("iconMode" + i, "id", getActivity().getPackageName());
+            int resID = getResources().getIdentifier("iconMode" + i, "id", Objects.requireNonNull(getActivity()).getPackageName());
             CircleImageView img = getView().findViewById(resID);
             img.setAlpha(0.30f);
             img.setBorderWidth(3);
@@ -93,19 +95,19 @@ public class HomeFragment extends Fragment {
      */
     void updateChart(boolean needsAnimation) {
 
-        if (!Utility.isFilePresent(getActivity(), "data.json")) {
+        if (!Utility.isFilePresent(Objects.requireNonNull(getActivity()))) {
             return;
         }
         JSONObject json = new JSONObject();
 
         try {
-            json = new JSONObject(Utility.read(getActivity(), "data.json"));
+            json = new JSONObject(Objects.requireNonNull(Utility.read(getActivity())));
         } catch (JSONException err) {
             Log.d("Error", err.toString());
         }
 
         TimeZone tz = TimeZone.getDefault();
-        SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat date = new SimpleDateFormat("dd-MM-yyyy");
         JSONObject todayData = new JSONObject();
         try {
             todayData = json.getJSONObject(date.format(Calendar.getInstance(tz).getTime()));
@@ -210,7 +212,7 @@ public class HomeFragment extends Fragment {
      *
      */
     private double addOptions(double gPerCO2, String activity) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getView().getContext());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(Objects.requireNonNull(getView()).getContext());
 
         if (activity.equals("Foot")) {
             String dietName = preferences.getString("diet", "Ignore Diet");
@@ -463,7 +465,7 @@ public class HomeFragment extends Fragment {
      */
     void updateIcons(Map<String, Integer> mostPresentWindow, double accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
 
-        TextView t = getView().findViewById(R.id.accuracyText);
+        TextView t = Objects.requireNonNull(getView()).findViewById(R.id.accuracyText);
         String s = "GPS on: " + gpsOn + " GPS Accuracy: " + String.format("%.3f", accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points;
         t.setText(s);
 

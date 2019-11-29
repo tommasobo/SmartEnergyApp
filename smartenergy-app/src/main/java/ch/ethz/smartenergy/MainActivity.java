@@ -1,6 +1,7 @@
 package ch.ethz.smartenergy;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -46,6 +47,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import biz.k11i.xgboost.Predictor;
 import biz.k11i.xgboost.util.FVec;
@@ -278,9 +280,9 @@ public class MainActivity extends AppCompatActivity {
      */
     private void updateJSON(String key, double distance) {
 
-        boolean isFilePresent = Utility.isFilePresent(this, "data.json");
+        boolean isFilePresent = Utility.isFilePresent(this);
         if(isFilePresent) {
-            String jsonString = Utility.read(this, "data.json");
+            String jsonString = Utility.read(this);
             //do the json parsing here and do the rest of functionality of app
         } else {
             boolean isFileCreated = Utility.create(this, "{}");
@@ -294,13 +296,13 @@ public class MainActivity extends AppCompatActivity {
         JSONObject json = new JSONObject();
 
         try {
-            json = new JSONObject(Utility.read(this, "data.json"));
+            json = new JSONObject(Objects.requireNonNull(Utility.read(this)));
         } catch (JSONException err){
             Log.d("Error", err.toString());
         }
 
         Calendar cal = Calendar.getInstance();
-        SimpleDateFormat dateOnly = new SimpleDateFormat("dd-MM-yyyy");
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateOnly = new SimpleDateFormat("dd-MM-yyyy");
 
         boolean exists = true;
 
@@ -364,7 +366,6 @@ public class MainActivity extends AppCompatActivity {
             json.put(dateOnly.format(cal.getTime()), activity);
         }catch (JSONException err){
             Log.d("Error", err.toString());
-            exists = true;
         }
 
         Utility.create(this, json.toString());
@@ -376,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
      * Finds the most used recent mode where GPS was not present after we acquire a new GPS signal.
      */
     private String findMostRecentModeWithGPS() {
-        Map<Integer, Integer> mapModes = new HashMap<>();
+        @SuppressLint("UseSparseArrays") Map<Integer, Integer> mapModes = new HashMap<>();
 
         for (Integer modeIndex : this.lastKnownModes) {
             mapModes.put(modeIndex, mapModes.getOrDefault(modeIndex, 0) + 1);
@@ -437,7 +438,7 @@ public class MainActivity extends AppCompatActivity {
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
 
-                float[] predictionsXGBoost = predict(
+                predict(
                         meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
                         maxSpeed, minSpeed, avgSpeed, accuracyGPS,
                         bluetoothNumber,
