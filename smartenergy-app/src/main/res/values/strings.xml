@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Smart Energy Pre Alpha</string>
+    <string name="app_name">Smart Energy</string>
     <string name="notification_service_text">Gathering Sensor Data…</string>
     <string name="locations_required_title">Locations required</string>
     <string name="locations_required_goodbye">You didn\'t accept the location request. Without locations, the application cannot work as intended. Goodbye!</string>

@@ -5,7 +5,9 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -82,6 +84,35 @@ public class HomeFragment extends Fragment {
         }
 
         chart = v.findViewById(R.id.chart_graph);
+        DisplayMetrics displayMetrics = Objects.requireNonNull(getContext()).getResources().getDisplayMetrics();
+
+        float heightPercentage = 0.493f;
+        float widthPercentage = 0.762f;
+        if (displayMetrics.heightPixels <= 1280) {
+            heightPercentage = 0.433f;
+        }
+        float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
+        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+        int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (dpHeight * heightPercentage), getResources().getDisplayMetrics());
+        int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (dpWidth * widthPercentage), getResources().getDisplayMetrics());
+        this.getView().findViewById(R.id.constraintLayout_outChart).getLayoutParams().height = height + 5;
+        this.chart.getLayoutParams().width = width;
+        this.chart.getLayoutParams().height = height;
+
+        if (dpHeight == 732.0 && dpWidth == 360.0) {
+            this.listIcons.forEach(icon -> {
+                icon.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics());
+                icon.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics());
+            });
+        }
+
+        if (dpHeight == 712.0 && dpWidth == 360.0) {
+            this.listIcons.forEach(icon -> {
+                icon.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
+                icon.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32, getResources().getDisplayMetrics());
+            });
+        }
+
         this.chart.setNoDataText("No Data Available for Today");
         this.updateChart(true);
     }
@@ -483,18 +514,18 @@ public class HomeFragment extends Fragment {
             if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 33.3f &&
                     getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) > 15f) {
                 img.setAlpha(0.45f);
-                img.setBorderWidth(5);
+                img.setBorderWidth(4);
             } else if (getPercentage(entry.getValue(), mostPresentWindow.values().stream().reduce(0, Integer::sum)) < 66.6f) {
                 img.setAlpha(0.75f);
-                img.setBorderWidth(7);
+                img.setBorderWidth(5);
             } else {
                 img.setAlpha(1f);
-                img.setBorderWidth(9);
+                img.setBorderWidth(7);
             }
 
             if (Collections.max(mostPresentWindow.entrySet(), Map.Entry.comparingByValue()).getKey().equals(entry.getKey())) {
                 img.setAlpha(1f);
-                img.setBorderWidth(9);
+                img.setBorderWidth(7);
             }
         }
 

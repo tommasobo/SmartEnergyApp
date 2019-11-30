@@ -67,6 +67,7 @@
             android:background="@android:color/transparent"
             android:onClick="leftClickTopBar"
             android:padding="13sp"
+            android:hapticFeedbackEnabled="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -81,7 +82,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout_outChart"
         app:layout_constraintVertical_bias="0.0">
 
         <Button
@@ -140,8 +141,10 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayout2"
-            android:layout_width="409dp"
+            android:layout_width="wrap_content"
             android:layout_height="62dp"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -150,11 +153,13 @@
                 android:id="@+id/iconMode8"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
-                android:layout_marginStart="16dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="4dp"
+                android:layout_marginEnd="4dp"
                 android:src="@drawable/ic_accessibility_black_24dp"
                 app:civ_border_color="#000000"
                 app:civ_border_width="1.5dp"
+                app:layout_constraintEnd_toStartOf="@+id/iconMode0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -162,6 +167,7 @@
                 android:id="@+id/iconMode0"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_directions_walk_black_24dp"
@@ -173,7 +179,8 @@
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/iconMode5"
                 android:layout_width="38dp"
-                android:layout_height="40dp"
+                android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_directions_bike_black_24dp"
@@ -185,7 +192,8 @@
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/iconMode6"
                 android:layout_width="38dp"
-                android:layout_height="40dp"
+                android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_electric_bike"
@@ -198,6 +206,7 @@
                 android:id="@+id/iconMode7"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_motorcycle_black_24dp"
@@ -209,7 +218,8 @@
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/iconMode3"
                 android:layout_width="38dp"
-                android:layout_height="40dp"
+                android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_directions_car_black_24dp"
@@ -222,6 +232,7 @@
                 android:id="@+id/iconMode2"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_directions_bus_black_24dp"
@@ -235,6 +246,7 @@
                 android:id="@+id/iconMode1"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_underground"
@@ -248,6 +260,7 @@
                 android:id="@+id/iconMode4"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:src="@drawable/ic_tram"
@@ -270,7 +283,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout"
+        android:id="@+id/constraintLayout_outChart"
         android:layout_width="0dp"
         android:layout_height="328dp"
         app:layout_constraintEnd_toEndOf="parent"

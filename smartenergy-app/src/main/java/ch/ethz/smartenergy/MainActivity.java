@@ -14,8 +14,10 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -685,7 +687,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Wifi numbers
-        if (this.latestWiFiNumber >= 1) {
+        /*if (this.latestWiFiNumber >= 1) {
             float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
             if (this.latestWiFiNumber == this.commonWiFi) {
                 points += 0.70f;
@@ -699,7 +701,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             points += 0.30f;
-        }
+        }*/
 
         if (meanMagnitude <= 0.20) {
             points += 0.50f;
@@ -938,6 +940,7 @@ public class MainActivity extends AppCompatActivity {
      * @param view current View in used
      */
     public void rightClickTopBar(View view) {
+        getWindow().getDecorView().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         getNextElement(1);
         StatsFragment sF = (StatsFragment) statsFragment;
         HomeFragment hF = (HomeFragment) homeFragment;
@@ -951,6 +954,7 @@ public class MainActivity extends AppCompatActivity {
      * @param view current View in used
      */
     public void leftClickTopBar(View view) {
+        getWindow().getDecorView().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         getNextElement(-1);
         StatsFragment sF = (StatsFragment) statsFragment;
         HomeFragment hF = (HomeFragment) homeFragment;
