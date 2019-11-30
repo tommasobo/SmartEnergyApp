@@ -99,7 +99,7 @@ public class HomeFragment extends Fragment {
         this.chart.getLayoutParams().width = width;
         this.chart.getLayoutParams().height = height;
 
-        if (dpHeight == 732.0 && dpWidth == 360.0) {
+        if ((dpHeight == 732.0 && dpWidth == 360.0) || (dpHeight == 592.0 && dpWidth == 360.0)) {
             this.listIcons.forEach(icon -> {
                 icon.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics());
                 icon.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics());
