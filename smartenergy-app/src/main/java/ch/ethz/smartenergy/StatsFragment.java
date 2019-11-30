@@ -258,12 +258,26 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
         chart.getAxisLeft().setDrawGridLines(true);
         chart.getAxisLeft().setAxisLineWidth(1.2f);
         chart.getAxisLeft().setGridLineWidth(0.6f);
-        chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getAxisLabel(float value, AxisBase axis) {
-                return ("" + (int)value);
-            }
-        });
+        if (Constants.MENU_OPTIONS[2].equals(this.selectedGraphName)) {
+            chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getAxisLabel(float value, AxisBase axis) {
+                    if (value <= 4) {
+                        return ("" + String.format("%.1f", value));
+                    } else {
+                        return ("" + (int) value);
+                    }
+                }
+            });
+        } else {
+            chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getAxisLabel(float value, AxisBase axis) {
+                    return ("" + (int)value);
+                }
+            });
+        }
+
         chart.getAxisRight().setDrawGridLines(false);
         chart.getAxisLeft().setAxisMinimum(0);
         chart.getDescription().setText("");
@@ -370,7 +384,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             });
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
-                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    if (yearAvg.get(j - 1) > 0) {
+                        entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    }
                 }
             } else if (entries.isEmpty()) {
                 i++;
@@ -543,7 +559,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
 
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
-                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    if (yearAvg.get(j - 1) > 0) {
+                        entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    }
                 }
             } else if (entries.isEmpty()) {
                 i++;
@@ -723,9 +741,15 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             });
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
-                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    if (yearAvg.get(j - 1) > 0) {
+                        entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    }
                 }
             } else if (entries.isEmpty()) {
+                i++;
+                continue;
+            }
+            if (entries.isEmpty()) {
                 i++;
                 continue;
             }
@@ -808,7 +832,9 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             });
             if (this.selectedTimeFrame.equals(Constants.TIMEFRAME_OPTIONS[2])) {
                 for (int j = 1; j <=12; j++) {
-                    entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    if (yearAvg.get(j - 1) > 0) {
+                        entries.add(new Entry(j, yearAvg.get(j - 1)));
+                    }
                 }
             } else if (entries.isEmpty()) {
                 i++;
