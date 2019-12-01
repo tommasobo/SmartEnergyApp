@@ -14,7 +14,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
@@ -98,7 +97,8 @@ public class MainActivity extends AppCompatActivity {
     private List<String> oldWifiNames = null;
     private Location latestKnownLocation = null;
     private double avgSpeedIcon;
-    private int lastGPSUpdate = 0;
+    private boolean oldGPSStatus = true;
+    private boolean currentGPSStatus = true;
     private boolean gpsOn = false;
     private List<Integer> lastKnownModes = new ArrayList<>();
     private List<Boolean> lastGPSStatus = new ArrayList<>();
@@ -133,9 +133,10 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             // load pretrained predictor_with_gps
-            InputStream model = getResources().openRawResource(R.raw.xgboost_final_with_gps);
+            InputStream model = getResources().openRawResource(R.raw.xgbooswithgps);
             predictor_with_gps = new Predictor(model);
-            InputStream model_no_gps = getResources().openRawResource(R.raw.xgboost_final_no_gps);
+
+            InputStream model_no_gps = getResources().openRawResource(R.raw.xgboosnogps);
             predictor_without_gps = new Predictor(model_no_gps);
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -229,23 +230,11 @@ public class MainActivity extends AppCompatActivity {
     private double calculateDistance(ArrayList<LocationScan> locationScans) {
 
         if (locationScans == null || locationScans.isEmpty()) {
-            this.lastGPSUpdate++;
             return 0.0;
         }
 
         // Relax rules if we are missing GPS for a long time
-        if (this.lastGPSUpdate >= Constants.MINUTES_WITHOUT_GPS) {
-            locationScans.removeIf(location -> location.getAccuracy() >= 1000);
-        } else {
-            locationScans.removeIf(location -> location.getAccuracy() >= 30);
-        }
-
-        if (locationScans.isEmpty()) {
-            this.lastGPSUpdate++;
-            return 0.0;
-        }
-
-        this.lastGPSUpdate = 0;
+        //double bestAccuracyWindow = locationScans.stream().mapToDouble(LocationScan::getAccuracy).min().orElse(0);
 
         double lon1 = locationScans.get(0).getLongitude();
         double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
@@ -259,7 +248,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (this.latestKnownLocation.getLatitude() == lat2 && lon2 == this.latestKnownLocation.getLongitude()) {
-            this.lastGPSUpdate++;
             return 0.0;
         }
 
@@ -327,12 +315,10 @@ public class MainActivity extends AppCompatActivity {
                     this.mostPresentPersistent.put(key, temp + 1);
                     activity.getJSONObject(key).put("time", this.mostPresentPersistent.get(key));
 
-                    if (this.lastGPSStatus.get(this.lastGPSStatus.size() - 1) && this.lastGPSStatus.size() == 4) {
-                        if (!this.lastGPSStatus.get(0) && !this.lastGPSStatus.get(1) && !this.lastGPSStatus.get(2)) {
-                            String key_update_gps = findMostRecentModeWithGPS();
-                            double d = activity.getJSONObject(key_update_gps).getDouble("distance");
-                            activity.getJSONObject(key_update_gps).put("distance", d + distance);
-                        }
+                    if (currentGPSStatus && !oldGPSStatus) {
+                        String key_update_gps = findMostRecentModeWithGPS();
+                        double d = activity.getJSONObject(key_update_gps).getDouble("distance");
+                        activity.getJSONObject(key_update_gps).put("distance", d + distance);
                     } else {
                         double d = activity.getJSONObject(key).getDouble("distance");
                         activity.getJSONObject(key).put("distance", d + distance);
@@ -431,8 +417,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
+                MainActivity.this.commonWiFi = 0;
                 if (MainActivity.this.latestWifiNames != null && MainActivity.this.oldWifiNames != null) {
-                    MainActivity.this.commonWiFi = (int) MainActivity.this.latestWifiNames.stream().filter(MainActivity.this.oldWifiNames::contains).count();
+                    for (String name : MainActivity.this.latestWifiNames) {
+                        if (MainActivity.this.oldWifiNames.contains(name)) {
+                            MainActivity.this.commonWiFi++;
+                        }
+                    }
                 }
 
                 boolean isStill = isStill(meanMagnitude, avgSpeed, maxSpeed);
@@ -507,7 +498,7 @@ public class MainActivity extends AppCompatActivity {
     private double calculateMinSpead(ArrayList<LocationScan> locationScans) {
         double minSpeed = 9999;
         for (LocationScan locationScan : locationScans) {
-            if (locationScan.getSpeed() < minSpeed && locationScan.getAccuracy() <= 50) {
+            if (locationScan.getSpeed() < minSpeed && locationScan.getAccuracy() <= 250) {
                 minSpeed = locationScan.getSpeed();
             }
         }
@@ -520,7 +511,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateData(boolean isStill, ArrayList<LocationScan> locationScans) {
         List<Float> listPredictions = new ArrayList<>();
-        ArrayList<LocationScan> locationScans2 = new ArrayList<>(locationScans);
 
         for (Integer index : this.previousModes) {
             predictions[index] += Constants.BONUS_PREVIOUS;
@@ -544,16 +534,15 @@ public class MainActivity extends AppCompatActivity {
         }
 
         distance += calculateDistance(locationScans);
-        isGPSOn(locationScans2);
-        if (this.lastGPSStatus.size() <= 4) {
-            this.lastGPSStatus.add(this.gpsOn);
-        } else {
-            this.lastGPSStatus.remove(0);
-            this.lastGPSStatus.add(this.gpsOn);
-        }
+        isGPSOn(locationScans);
+        this.lastGPSStatus.add(this.gpsOn);
 
+        float[] accuracy_array = new float[locationScans.size()];
+        for (int k = 0; k < locationScans.size(); k++) {
+            accuracy_array[k] = locationScans.get(k).getAccuracy();
+        }
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, this.accuracy, this.latestWiFiNumber, this.oldWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points);
+        homeFragment.updateIcons(this.mostPresentWindow, accuracy_array, this.latestWiFiNumber, this.oldWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points);
 
         if (this.internalCycle == 10) {
 
@@ -568,6 +557,8 @@ public class MainActivity extends AppCompatActivity {
                 this.lastKnownModes.remove(0);
                 this.lastKnownModes.add(key_number);
             }
+            this.oldGPSStatus = this.currentGPSStatus;
+            this.currentGPSStatus = mostPresentGPS();
 
             updateJSON(key, distance);
 
@@ -583,6 +574,17 @@ public class MainActivity extends AppCompatActivity {
             distance = 0;
         }
 
+    }
+
+    private boolean mostPresentGPS() {
+        int counter = 0;
+        for (boolean status : this.lastGPSStatus) {
+            if (status) {
+                counter++;
+            }
+        }
+
+        return counter >= 5;
     }
 
     private void isGPSOn(ArrayList<LocationScan> locationScans) {
@@ -604,32 +606,21 @@ public class MainActivity extends AppCompatActivity {
 
         if (locationScans.isEmpty()) {
             this.gpsOn = false;
-            return;
-        }
-
-        this.lastGPSUpdate = 0;
-        double lon2 = locationScans.get(locationScans.size() - 1).getLongitude();
-        double lat2 = locationScans.get(locationScans.size() - 1).getLatitude();
-
-        if (this.latestKnownLocation != null) {
-            if (this.latestKnownLocation.getLatitude() == lat2 && lon2 == this.latestKnownLocation.getLongitude()) {
-                this.gpsOn = false;
-            }
         }
     }
 
-    private float[] predict(double meanMagnitude, double avgAccX, double avgAccY, double avgAccZ,
-                            double maxSpeed, double minSpeed, double avgSpeed, double accuracyGPS,
-                            int bluetoothNumbers,
-                            double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ,
-                            double magnitudeMagn, double avgMagnX, double avgMagnY, double avgMagnZ) {
+    private void predict(double accMean, double avgAccX, double avgAccY, double avgAccZ,
+                         double maxSpeed, double minSpeed, double avgSpeed, double accuracyGPS,
+                         int bluetoothNumbers,
+                         double magnitudeGyro, double avgGyroX, double avgGyroY, double avgGyroZ,
+                         double magnitudeMagn, double avgMagnX, double avgMagnY, double avgMagnZ) {
 
 
         float[] predictions;
         if (this.gpsOn) {
             // build features vector
-            double[] features = {meanMagnitude, avgAccY, accuracyGPS,
-                    bluetoothNumbers, magnitudeGyro,
+            double[] features = {accMean, avgAccX, avgAccY, avgAccZ, accuracyGPS, avgSpeed,
+                    bluetoothNumbers, magnitudeGyro, avgGyroX, avgGyroY, avgGyroZ,
                     magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ,
                     maxSpeed, minSpeed};
             FVec features_vector = FVec.Transformer.fromArray(features, false);
@@ -637,8 +628,8 @@ public class MainActivity extends AppCompatActivity {
             predictions = predictor_with_gps.predict(features_vector);
         } else {
             // build features vector
-            double[] features = {meanMagnitude, avgAccX, avgAccY, avgAccZ,
-                    bluetoothNumbers, magnitudeGyro,
+            double[] features = {accMean, avgAccX, avgAccY, avgAccZ,
+                    bluetoothNumbers, magnitudeGyro, avgGyroX, avgGyroY, avgGyroZ,
                     magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ};
             FVec features_vector = FVec.Transformer.fromArray(features, false);
             //predict
@@ -647,7 +638,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         this.predictions = predictions;
-        return predictions;
     }
 
 
@@ -663,9 +653,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Case where no GPS detected
         if (!this.gpsOn) {
-            if (meanMagnitude <= 0.40) {
+            if (meanMagnitude <= 0.30) {
                 points += 0.80f;
-            } else if (meanMagnitude <= 0.46 && meanMagnitude > 0.40) {
+            } else if (meanMagnitude <= 0.40 && meanMagnitude > 0.30) {
                 points += 0.50f;
             }
 
@@ -673,7 +663,7 @@ public class MainActivity extends AppCompatActivity {
                 float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
                 if (this.latestWiFiNumber == this.commonWiFi) {
                     points += 0.40f;
-                } else if (this.latestWiFiNumber >= 3){
+                } else if (this.latestWiFiNumber >= 5){
                     if (percent <= 0.10f) {
                         points += 0.30f;
                     }
@@ -684,6 +674,10 @@ public class MainActivity extends AppCompatActivity {
 
             this.points = points;
             return points >= 0.79f;
+        }
+
+        if (avgSpeed > 12.0f) {
+            return false;
         }
 
         // Wifi numbers
@@ -732,7 +726,7 @@ public class MainActivity extends AppCompatActivity {
     private double calculateMaxSpead(ArrayList<LocationScan> locationScans) {
         double maxSpeed = 0;
         for (LocationScan locationScan : locationScans) {
-            if (locationScan.getAccuracy() <= 50) {
+            if (locationScan.getAccuracy() <= 250) {
                 if (locationScan.getSpeed() > maxSpeed) {
                     maxSpeed = locationScan.getSpeed();
                 }
@@ -746,8 +740,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private double calculateAvgSpeed(ArrayList<LocationScan> locationScans) {
-        this.avgSpeedIcon = locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
-        return locationScans.stream().filter(e->e.getAccuracy()<=50).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        this.avgSpeedIcon = locationScans.stream().filter(e->e.getAccuracy()<=250).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
+        return locationScans.stream().filter(e->e.getAccuracy()<=250).mapToDouble(LocationScan::getSpeed).average().orElse(0.0);
     }
 
     private double avgAccX(ArrayList<SensorReading> accReadings) {

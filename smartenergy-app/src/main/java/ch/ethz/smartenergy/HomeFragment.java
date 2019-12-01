@@ -494,10 +494,10 @@ public class HomeFragment extends Fragment {
      * @param mostPresentWindow map with the predictions for each mode
      *
      */
-    void updateIcons(Map<String, Integer> mostPresentWindow, double accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
+    void updateIcons(Map<String, Integer> mostPresentWindow, float[] accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points) {
 
         TextView t = Objects.requireNonNull(getView()).findViewById(R.id.accuracyText);
-        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + String.format("%.3f", accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points;
+        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + Arrays.toString(accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points;
         t.setText(s);
 
         for (String activity : Constants.ListModes) {

@@ -15,7 +15,7 @@ public class WeekViewFormatter extends ValueFormatter {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE,  - 6 + (int)value);
         int currentDay = cal.get(Calendar.DAY_OF_MONTH);
-        String month = cal.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault());
+        String month = cal.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.ENGLISH);
         return (currentDay + " " + month);
     }
 }
