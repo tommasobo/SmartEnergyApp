@@ -676,7 +676,7 @@ public class MainActivity extends AppCompatActivity {
             return points >= 0.79f;
         }
 
-        if (avgSpeed > 12.0f) {
+        if (avgSpeed > 15.0f) {
             return false;
         }
 
