@@ -3,6 +3,7 @@ package ch.ethz.smartenergy;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.DisplayMetrics;
@@ -470,6 +471,7 @@ public class HomeFragment extends Fragment {
             this.chart.invalidate();
         }
         this.button.setText(R.string.start_scanning_on_click);
+        this.button.getBackground().setColorFilter(Utility.rgb("#c9e7ca"), PorterDuff.Mode.MULTIPLY);
     }
 
     /**

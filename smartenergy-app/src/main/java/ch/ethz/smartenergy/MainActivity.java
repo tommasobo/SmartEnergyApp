@@ -635,6 +635,9 @@ public class MainActivity extends AppCompatActivity {
             //predict
             predictions = predictor_without_gps.predict(features_vector);
             predictions[1] += Constants.BONUS_TRAIN_NO_GPS;
+            predictions[4] -= Constants.BONUS_TRAIN_NO_GPS;
+            predictions[5] -= Constants.BONUS_TRAIN_NO_GPS;
+            predictions[7] -= Constants.BONUS_TRAIN_NO_GPS;
         }
 
         this.predictions = predictions;

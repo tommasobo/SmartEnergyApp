@@ -388,7 +388,8 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         entries.add(new Entry(j, yearAvg.get(j - 1)));
                     }
                 }
-            } else if (entries.isEmpty()) {
+            }
+            if (entries.isEmpty()) {
                 i++;
                 continue;
             }
@@ -563,7 +564,8 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         entries.add(new Entry(j, yearAvg.get(j - 1)));
                     }
                 }
-            } else if (entries.isEmpty()) {
+            }
+            if (entries.isEmpty()) {
                 i++;
                 continue;
             }
@@ -745,9 +747,6 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         entries.add(new Entry(j, yearAvg.get(j - 1)));
                     }
                 }
-            } else if (entries.isEmpty()) {
-                i++;
-                continue;
             }
             if (entries.isEmpty()) {
                 i++;
@@ -836,7 +835,8 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         entries.add(new Entry(j, yearAvg.get(j - 1)));
                     }
                 }
-            } else if (entries.isEmpty()) {
+            }
+            if (entries.isEmpty()) {
                 i++;
                 continue;
             }
