@@ -431,13 +431,14 @@ public class MainActivity extends AppCompatActivity {
                 int bluetoothNumber = getBluetoothNumbers(scan.getBluetoothScans());
                 MainActivity.this.blueNumbers = bluetoothNumber;
 
-                predict(
-                        meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
-                        maxSpeed, minSpeed, avgSpeed, accuracyGPS,
-                        bluetoothNumber,
-                        calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
-                        calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
-
+                if (!isStill){
+                    predict(
+                            meanMagnitude, avgAccX(scan.getAccReadings()), avgAccY(scan.getAccReadings()), avgAccZ(scan.getAccReadings()),
+                            maxSpeed, minSpeed, avgSpeed, accuracyGPS,
+                            bluetoothNumber,
+                            calculateMeanMagnitude(scan.getGyroReadings(), false), avgAccX(scan.getGyroReadings()), avgAccY(scan.getGyroReadings()), avgAccZ(scan.getGyroReadings()),
+                            calculateMeanMagnitude(scan.getMagnReadings(), false), avgAccX(scan.getMagnReadings()), avgAccY(scan.getMagnReadings()), avgAccZ(scan.getMagnReadings()));
+                }
                 updateData(isStill, scan.getLocationScans());
 
                 MainActivity.this.internalCycle++;
@@ -511,16 +512,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateData(boolean isStill, ArrayList<LocationScan> locationScans) {
         List<Float> listPredictions = new ArrayList<>();
+        int indexMaxMode = 8;
 
-        for (Integer index : this.previousModes) {
-            predictions[index] += Constants.BONUS_PREVIOUS;
+        if (this.predictions != null && this.predictions.length > 1) {
+            for (Integer index : this.previousModes) {
+                if (index < 8) {
+                    predictions[index] += Constants.BONUS_PREVIOUS;
+                }
+            }
+
+            for (float prediction : predictions) {
+                listPredictions.add(prediction);
+            }
+
+            indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
         }
 
-        for (float prediction : predictions) {
-            listPredictions.add(prediction);
-        }
-
-        int indexMaxMode = listPredictions.indexOf(listPredictions.stream().max(Float::compare).get());
 
         if (this.previousModes.size() == 4) {
             this.previousModes.clear();
@@ -636,7 +643,7 @@ public class MainActivity extends AppCompatActivity {
             predictions = predictor_without_gps.predict(features_vector);
             predictions[1] += Constants.BONUS_TRAIN_NO_GPS;
             predictions[4] -= Constants.BONUS_TRAIN_NO_GPS;
-            predictions[5] -= Constants.BONUS_TRAIN_NO_GPS;
+            predictions[6] -= Constants.BONUS_TRAIN_NO_GPS;
             predictions[7] -= Constants.BONUS_TRAIN_NO_GPS;
         }
 
