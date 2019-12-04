@@ -72,7 +72,6 @@ public class Constants {
     static final String SMALL_CAR = "Small Car";
     static final String BIG_CAR = "Sport Car";
     static final String ELECTRIC_CAR = "Electric Car";
-    static final int MINUTES_WITHOUT_GPS = 19; // Equals two minutes
 
 
     private static int rgb(String hex) {

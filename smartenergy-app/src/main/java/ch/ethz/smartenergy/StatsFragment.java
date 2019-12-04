@@ -262,7 +262,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
             chart.getAxisLeft().setValueFormatter(new ValueFormatter() {
                 @Override
                 public String getAxisLabel(float value, AxisBase axis) {
-                    if (value <= 4) {
+                    if (value < 10) {
                         return ("" + String.format("%.1f", value));
                     } else {
                         return ("" + (int) value);

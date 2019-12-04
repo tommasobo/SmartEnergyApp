@@ -108,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
     private double previousAccuracy = -1.0;
     private double meanAcc;
     private float points;
+    private double distanceLastMinute;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -546,6 +547,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         distance += calculateDistance(locationScans);
+        this.distanceLastMinute = distance;
         isGPSOn(locationScans);
         this.lastGPSStatus.add(this.gpsOn);
 
@@ -554,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
             accuracy_array[k] = locationScans.get(k).getAccuracy();
         }
         HomeFragment homeFragment = (HomeFragment) MainActivity.this.homeFragment;
-        homeFragment.updateIcons(this.mostPresentWindow, accuracy_array, this.latestWiFiNumber, this.oldWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points);
+        homeFragment.updateIcons(this.mostPresentWindow, accuracy_array, this.latestWiFiNumber, this.oldWiFiNumber, this.commonWiFi, convertToKmPerHour(this.avgSpeedIcon), this.gpsOn, this.blueNumbers, this.meanAcc, this.predictions, this.points, this.distanceLastMinute);
 
         if (this.internalCycle == 10) {
 
@@ -600,7 +602,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void isGPSOn(ArrayList<LocationScan> locationScans) {
-        if (locationScans == null || this.accuracy == -1.0) {
+        if (locationScans == null || this.accuracy == -1.0 || this.accuracy == 0.0) {
             this.gpsOn = false;
             return;
         }
@@ -647,7 +649,7 @@ public class MainActivity extends AppCompatActivity {
             //predict
             predictions = predictor_without_gps.predict(features_vector);
             predictions[1] += Constants.BONUS_TRAIN_NO_GPS;
-            predictions[4] -= Constants.BONUS_TRAIN_NO_GPS;
+            predictions[5] -= Constants.BONUS_TRAIN_NO_GPS;
             predictions[6] -= Constants.BONUS_TRAIN_NO_GPS;
             predictions[7] -= Constants.BONUS_TRAIN_NO_GPS;
         }
@@ -668,10 +670,10 @@ public class MainActivity extends AppCompatActivity {
 
         // Case where no GPS detected
         if (!this.gpsOn) {
-            if (meanMagnitude <= 0.30) {
+            if (meanMagnitude <= 0.35) {
                 points += 0.80f;
             } else if (meanMagnitude <= 0.40 && meanMagnitude > 0.30) {
-                points += 0.50f;
+                points += 0.20f;
             }
 
             if (this.latestWiFiNumber >= 1) {
