@@ -39,7 +39,7 @@ public class SliderAdapter extends PagerAdapter {
                     "Please note that we only register and save meaningful trips, that means that walking inside the house with many stops in between will most likely not be registered while walking for more time without interruption will.",
             "Look at the different graphs to have a clear picture of your daily carbon and energy footprint  and see how your behaviour changes over time. There are also other interesting stats like distance and time.\n" +
                     "The icons on the home page light up based on how likely they are being used based on our predictions.",
-            "You can go to settings to personalize your experience. We can provide more accurate results if you can give us some information about your habits."
+            "You can go to settings to personalize your experience. We can provide more accurate results if you can give us some information about your habits.\n Also remember that you can simply close the App when you are done or want to stop collecting data"
     };
 
 
