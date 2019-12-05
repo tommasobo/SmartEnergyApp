@@ -168,6 +168,10 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                         if (out[0].charAt(0) == '0') {
                             out[0] = out[0].substring(1);
                         }
+                        if (out[1].charAt(0) == '0') {
+                            out[1] = out[1].substring(1);
+                        }
+
                         if (out[0].equals(String.valueOf(calendar.get(Calendar.DAY_OF_MONTH))) &&
                             out[1].equals(String.valueOf(calendar.get(Calendar.MONTH) + 1)) &&
                             out[2].equals(String.valueOf(calendar.get(Calendar.YEAR)))) {
