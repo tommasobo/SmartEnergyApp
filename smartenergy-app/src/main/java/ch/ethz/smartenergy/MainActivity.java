@@ -701,10 +701,10 @@ public class MainActivity extends AppCompatActivity {
         if (this.latestWiFiNumber >= 1) {
             float percent = Math.abs(1f - ((float)this.commonWiFi / (float)this.latestWiFiNumber));
             if (this.latestWiFiNumber == this.commonWiFi) {
-                points += 0.70f;
+                points += 0.60f;
             } else {
                 if (percent <= 0.10f) {
-                    points += 0.50f;
+                    points += 0.40f;
                 }
                 if (percent <= 0.25f && percent > 0.10f) {
                     points += 0.30f;

@@ -18,6 +18,7 @@ import android.widget.FrameLayout.LayoutParams;
 import android.widget.TextSwitcher;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.PieChart;
@@ -53,6 +54,7 @@ public class HomeFragment extends Fragment {
     private List<PieEntry> pieChartEntries;
     private List<Integer> colorEntries;
     private String selectedGraphName = Constants.MENU_OPTIONS[1];
+    private boolean debugMode = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -60,6 +62,7 @@ public class HomeFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
+    @SuppressLint("CutPasteId")
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
 
@@ -85,6 +88,7 @@ public class HomeFragment extends Fragment {
         }
 
         chart = v.findViewById(R.id.chart_graph);
+        ConstraintLayout outerLayout = this.getView().findViewById(R.id.constraintLayout_outChart);
         DisplayMetrics displayMetrics = Objects.requireNonNull(getContext()).getResources().getDisplayMetrics();
 
         float heightPercentage = 0.493f;
@@ -96,7 +100,8 @@ public class HomeFragment extends Fragment {
         float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
         int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (dpHeight * heightPercentage), getResources().getDisplayMetrics());
         int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, (dpWidth * widthPercentage), getResources().getDisplayMetrics());
-        this.getView().findViewById(R.id.constraintLayout_outChart).getLayoutParams().height = height + 5;
+        outerLayout.getLayoutParams().height = height + 5;
+        outerLayout.getLayoutParams().width = width;
         this.chart.getLayoutParams().width = width;
         this.chart.getLayoutParams().height = height;
 
@@ -499,9 +504,12 @@ public class HomeFragment extends Fragment {
      */
     void updateIcons(Map<String, Integer> mostPresentWindow, float[] accuracy, int latestWiFiNumber, int oldWifi, int commonWifi, double avgSpeed, boolean gpsOn, int blueNumbers, double meanAcc, float[] predictions, float points, double distanceLastMinute) {
 
-        TextView t = Objects.requireNonNull(getView()).findViewById(R.id.accuracyText);
-        String s = "GPS on: " + gpsOn + " GPS Accuracy: " + Arrays.toString(accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points + " Dis: " + String.format("%.4f", distanceLastMinute);
-        t.setText(s);
+
+        if (this.debugMode) {
+            TextView t = Objects.requireNonNull(getView()).findViewById(R.id.accuracyText);
+            String s = "GPS on: " + gpsOn + " GPS Accuracy: " + Arrays.toString(accuracy) + " Wifi(OldNewCommon): " + oldWifi + " " + latestWiFiNumber + " " + commonWifi + " Avg.Speed " + String.format("%.3f", avgSpeed) + " Blue : " + blueNumbers + " Mean Acc: " +  String.format("%.4f", meanAcc) + " Points: " + points + " Dis: " + String.format("%.4f", distanceLastMinute);
+            t.setText(s);
+        }
 
         for (String activity : Constants.ListModes) {
             if (!mostPresentWindow.containsKey(activity)) {
