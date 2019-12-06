@@ -16,9 +16,9 @@ public class Constants {
     public static final String MagnReadingExtraName = "MagneticFieldReading";
 
     // General Logic
-    static final double MaxAvgSpeedStill = 2.2f;
-    static final double TopAvgSpeedAllowed = 3.0f;
-    static final double MaxSpeedStill = 4.0;
+    static final double MaxAvgSpeedStill = 2.0f;
+    static final double TopAvgSpeedAllowed = 2.8f;
+    static final double MaxSpeedStill = 3.5;
     static final double StopSpeed = 0.0f;
     static final double BONUS_PREVIOUS = 0.02;
     static final double BONUS_TRAIN_NO_GPS = 0.18;
