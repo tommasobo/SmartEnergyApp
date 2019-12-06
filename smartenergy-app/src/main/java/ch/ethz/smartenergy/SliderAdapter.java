@@ -21,7 +21,7 @@ public class SliderAdapter extends PagerAdapter {
 
     private int[] slide_images = {
             R.drawable.lamp,
-            R.drawable.deep_learning,
+            R.drawable.neural,
             R.drawable.barchart,
             R.drawable.ecologic
     };
