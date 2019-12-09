@@ -646,9 +646,10 @@ public class MainActivity extends AppCompatActivity {
                     bluetoothNumbers, magnitudeGyro, avgGyroX, avgGyroY, avgGyroZ,
                     magnitudeMagn, avgMagnX, avgMagnY, avgMagnZ};
             FVec features_vector = FVec.Transformer.fromArray(features, false);
-            //predict
+            //predict and fix edge cases
             predictions = predictor_without_gps.predict(features_vector);
             predictions[1] += Constants.BONUS_TRAIN_NO_GPS;
+            predictions[4] -= Constants.BONUS_TRAIN_NO_GPS;
             predictions[5] -= Constants.BONUS_TRAIN_NO_GPS;
             predictions[6] -= Constants.BONUS_TRAIN_NO_GPS;
             predictions[7] -= Constants.BONUS_TRAIN_NO_GPS;

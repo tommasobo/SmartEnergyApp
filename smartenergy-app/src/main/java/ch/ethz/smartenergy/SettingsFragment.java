@@ -51,7 +51,7 @@ public class SettingsFragment extends Fragment {
 
         getView().findViewById(R.id.button_info_car).setOnClickListener(v -> {
             ToolTip toolTip = new ToolTip.Builder()
-                    .withText("Choose the car you own \n to make calculations \n more precise")
+                    .withText("Choose roughly the car you own \n to make calculations \n more precise")
                     .withTextSize(40)
                     .withPadding(15,15,15,15)
                     .withBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorDarkGrey))

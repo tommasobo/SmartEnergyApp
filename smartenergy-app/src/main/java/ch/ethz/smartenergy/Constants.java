@@ -21,7 +21,7 @@ public class Constants {
     static final double MaxSpeedStill = 3.5;
     static final double StopSpeed = 0.0f;
     static final double BONUS_PREVIOUS = 0.02;
-    static final double BONUS_TRAIN_NO_GPS = 0.18;
+    static final double BONUS_TRAIN_NO_GPS = 0.45;
     static final String[] ListModes = {"Foot", "Train", "Bus", "Car", "Tram", "Bicycle", "E-Bike", "Motorcycle", "Still"};
 
     // Emission Logic

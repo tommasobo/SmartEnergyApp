@@ -246,7 +246,7 @@ public class StatsFragment extends Fragment implements AdapterView.OnItemSelecte
                 @Override
                 public String getFormattedValue(float value) {
 
-                    return String.format(Locale.ENGLISH, "%.2f", value);
+                    return String.format(Locale.ENGLISH, "%.1f", value);
                 }
             });
         } else {
