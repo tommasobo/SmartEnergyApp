@@ -93,7 +93,7 @@ public class HomeFragment extends Fragment {
 
         float heightPercentage = 0.493f;
         float widthPercentage = 0.762f;
-        if (displayMetrics.heightPixels <= 1280) {
+        if (displayMetrics.heightPixels <= 1280 || (displayMetrics.heightPixels == 1776 && displayMetrics.widthPixels == 1080)) {
             heightPercentage = 0.433f;
         }
         float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
@@ -105,7 +105,7 @@ public class HomeFragment extends Fragment {
         this.chart.getLayoutParams().width = width;
         this.chart.getLayoutParams().height = height;
 
-        if ((dpHeight == 732.0 && dpWidth == 360.0) || (dpHeight == 592.0 && dpWidth == 360.0)) {
+        if ((dpHeight == 732.0 && dpWidth == 360.0) || (dpHeight == 592.0 && dpWidth == 360.0) || (dpHeight == 672.0 && dpWidth == 360.0)) {
             this.listIcons.forEach(icon -> {
                 icon.getLayoutParams().width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics());
                 icon.getLayoutParams().height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 34, getResources().getDisplayMetrics());
