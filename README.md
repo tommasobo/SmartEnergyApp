@@ -22,3 +22,8 @@ Home Page with info about the current status and today's data.
   <img width="300" alt="Splan Screen" src="train-mode.png" style="margin:300px">
 </p>
 
+Stats page. Fully customizable with different time frames.
+<p align="center" width="100%">
+  <img width="300" alt="Splan Screen" src="graph1.png" style="margin:30px 50px">
+  <img width="300" alt="Splan Screen" src="graph2.png" style="margin:300px">
+</p>
