@@ -10,3 +10,15 @@ The goal of this project is to develop a fully functional android prototype app.
 To Install the App download the apk from here. Please note that you might need to enable Devoleper mode on Android. Also the app, by design, requires constant GPS access which needs to be manually granted by the user from Android 10.
 
 # Screenshots
+Splan Screen
+<p align="center" width="100%">
+  <img width="300" alt="Splan Screen" src="intro1.png" style="margin:30px 50px">
+  <img width="300" alt="Splan Screen" src="intro4.png" style="margin:300px">
+</p>
+
+Home Page with info about the current status and today's data.
+<p align="center" width="100%">
+  <img width="300" alt="Splan Screen" src="distance.png" style="margin:30px 50px">
+  <img width="300" alt="Splan Screen" src="train-mode.png" style="margin:300px">
+</p>
+
