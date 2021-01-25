@@ -7,7 +7,7 @@ The focus of this project is to develop a mobile phone application.  This app sh
 The goal of this project is to develop a fully functional android prototype app. This includes backend and frontend development. In addition, improving the machine learning model accuracy is vital to the success of such an application. Thus, creating an application to provide people with reliable information about the impact of their behaviour.
 
 # Installation
-To Install the App download the apk from here. Please note that you might need to enable Devoleper mode on Android. Also the app, by design, requires constant GPS access which needs to be manually granted by the user from Android 10.
+To Install the App download the [APK from here](https://github.com/tommasobo/SmartEnergyApp/raw/master/smartenergy-app-release.apk). Please note that you might need to enable Developer mode on Android. Also the app, by design, requires constant GPS access which needs to be manually granted by the user from Android 10+.
 
 # Screenshots
 Splan Screen
